@@ -1,4 +1,4 @@
-import { Clock, Boxes, HardDrive, History } from "lucide-react";
+import { Clock, HardDrive, History } from "lucide-react";
 import { GlassCard } from "../../components/ui/GlassCard";
 import { formatRelativeTime } from "../../lib/relative-time";
 import type { DashboardStats } from "./useDashboard";
@@ -22,7 +22,7 @@ export function StatsRow({ stats, loading }: StatsRowProps) {
   if (loading || !stats) {
     return (
       <div className="stats-row">
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2].map((i) => (
           <GlassCard key={i} className="stat-card">
             <div className="skeleton" style={{ height: 12, width: 80 }} />
             <div className="skeleton" style={{ height: 24, width: 120 }} />
@@ -33,10 +33,6 @@ export function StatsRow({ stats, loading }: StatsRowProps) {
     );
   }
 
-  const activeModules = Object.values(stats.modules).filter(
-    (m) => m.status === "active",
-  ).length;
-  const totalModules = Object.keys(stats.modules).length;
   const storagePct = Math.round((stats.storage.used_bytes / stats.storage.limit_bytes) * 100);
 
   return (
@@ -50,18 +46,6 @@ export function StatsRow({ stats, loading }: StatsRowProps) {
         <div className="stat-card__hint">
           {stats.last_login ? new Date(stats.last_login).toLocaleString("de-DE") : "Noch nie"}
         </div>
-      </GlassCard>
-
-      <GlassCard className="stat-card">
-        <div className="stat-card__header">
-          <Boxes size={14} />
-          Module
-        </div>
-        <div className="stat-card__value">
-          {activeModules}
-          <span style={{ fontSize: 14, color: "var(--text-muted)" }}> / {totalModules} aktiv</span>
-        </div>
-        <div className="stat-card__hint">Auth läuft. Rest folgt laut Roadmap.</div>
       </GlassCard>
 
       <GlassCard className="stat-card">
