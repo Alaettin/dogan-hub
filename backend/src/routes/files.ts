@@ -12,7 +12,6 @@ import {
 } from "../schemas/file.schema.js";
 import {
   MAX_FILE_SIZE_BYTES,
-  MIME_WHITELIST,
   sanitizeFilename,
 } from "../services/file.service.js";
 import {
@@ -60,9 +59,8 @@ filesRouter.post("/sign-upload", requireAuth, async (req, res, next) => {
     if (!req.user) throw errors.unauthorized();
     const body = signUploadSchema.parse(req.body);
 
-    if (!MIME_WHITELIST.has(body.mime_type)) {
-      throw errors.badRequest(`MIME-Typ "${body.mime_type}" nicht erlaubt`);
-    }
+    // Kein MIME-Whitelist-Check mehr — User soll alles hochladen können.
+    // Size-Limit + RLS-Path-Trennung bleiben als Schutz.
     if (body.size_bytes <= 0) throw errors.badRequest("Empty file");
     if (body.size_bytes > MAX_FILE_SIZE_BYTES) {
       throw errors.badRequest(`Datei zu groß (max ${MAX_FILE_SIZE_BYTES} bytes)`);

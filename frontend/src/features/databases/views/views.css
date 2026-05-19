@@ -38,22 +38,6 @@
   color: var(--text-primary);
 }
 
-/* Icon-only-Variante (z.B. FilesPage): quadratische Toggles passend zur
-   Höhe der GlassButtons daneben. */
-.view-switcher--icons {
-  padding: 4px;
-}
-.view-switcher--icons .view-switcher__btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  justify-content: center;
-  gap: 0;
-}
-.view-switcher--icons .view-switcher__btn:hover {
-  background: var(--glass-bg-2);
-}
-
 .sort-popover {
   position: absolute;
   top: calc(100% + 4px);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { GlassDialog } from "../../components/ui/GlassDialog";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { useDownloadFile, type FileRow } from "./useFiles";
@@ -70,7 +70,7 @@ export function FilePreviewDialog({ open, onOpenChange, file }: FilePreviewDialo
         </div>
         <GlassButton
           variant="secondary"
-          onClick={async () => {
+          onClick={() => {
             if (previewUrl) {
               window.open(previewUrl, "_blank", "noopener,noreferrer");
             }
@@ -80,9 +80,14 @@ export function FilePreviewDialog({ open, onOpenChange, file }: FilePreviewDialo
           <Download size={14} />
           Herunterladen
         </GlassButton>
-        <GlassButton variant="ghost" onClick={() => onOpenChange(false)}>
-          Schließen
-        </GlassButton>
+        <button
+          type="button"
+          className="preview-header__close"
+          onClick={() => onOpenChange(false)}
+          aria-label="Schließen"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       <div className="preview-body">

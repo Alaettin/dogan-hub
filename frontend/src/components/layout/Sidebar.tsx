@@ -16,6 +16,9 @@ interface SidebarItem {
   label: string;
   icon: React.ReactNode;
   disabled?: boolean;
+  /** NavLink end-Matching. Default true (exakter Match). Auf false setzen wenn
+   *  der Eintrag auch auf Sub-Routen aktiv bleiben soll (z.B. /databases/:id). */
+  end?: boolean;
 }
 
 export function Sidebar() {
@@ -34,7 +37,12 @@ export function Sidebar() {
 
       <div className="sidebar__section-label">Daten</div>
       <nav className="sidebar__nav">
-        <SidebarLink to="/databases" label="Datenbanken" icon={<Database size={16} />} />
+        <SidebarLink
+          to="/databases"
+          label="Datenbanken"
+          icon={<Database size={16} />}
+          end={false}
+        />
         <SidebarLink to="/dateien" label="Dateien" icon={<FolderOpen size={16} />} />
         <SidebarLink
           to="/dateien/papierkorb"
@@ -57,7 +65,7 @@ export function Sidebar() {
   );
 }
 
-function SidebarLink({ to, label, icon, disabled }: SidebarItem) {
+function SidebarLink({ to, label, icon, disabled, end }: SidebarItem) {
   if (disabled) {
     return (
       <span className={cn("sidebar__item", "sidebar__item--disabled")} aria-disabled="true">
@@ -70,7 +78,7 @@ function SidebarLink({ to, label, icon, disabled }: SidebarItem) {
   return (
     <NavLink
       to={to}
-      end={to === "/"}
+      end={end ?? true}
       className={({ isActive }) =>
         cn("sidebar__item", isActive && "sidebar__item--active")
       }

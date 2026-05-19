@@ -67,32 +67,30 @@ export function FilesPage() {
             onNavigate={navigate}
           />
           <div className="files-toolbar__spacer" />
-          <div className="view-switcher view-switcher--icons" role="tablist" aria-label="Ansicht">
-            <button
-              type="button"
-              className={cn(
-                "view-switcher__btn",
-                viewMode === "list" && "view-switcher__btn--active",
-              )}
-              onClick={() => setViewMode("list")}
-              aria-selected={viewMode === "list"}
-              aria-label="Listenansicht"
-            >
-              <List size={16} />
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "view-switcher__btn",
-                viewMode === "grid" && "view-switcher__btn--active",
-              )}
-              onClick={() => setViewMode("grid")}
-              aria-selected={viewMode === "grid"}
-              aria-label="Kachelansicht"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
+          <GlassButton
+            variant="secondary"
+            className={cn(
+              "glass-button--icon",
+              viewMode === "list" && "glass-button--toggle-active",
+            )}
+            onClick={() => setViewMode("list")}
+            aria-pressed={viewMode === "list"}
+            aria-label="Listenansicht"
+          >
+            <List size={16} />
+          </GlassButton>
+          <GlassButton
+            variant="secondary"
+            className={cn(
+              "glass-button--icon",
+              viewMode === "grid" && "glass-button--toggle-active",
+            )}
+            onClick={() => setViewMode("grid")}
+            aria-pressed={viewMode === "grid"}
+            aria-label="Kachelansicht"
+          >
+            <LayoutGrid size={16} />
+          </GlassButton>
           <GlassButton variant="secondary" onClick={() => setCreateOpen(true)}>
             <Plus size={14} />
             Neuer Ordner

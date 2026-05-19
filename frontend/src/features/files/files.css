@@ -402,15 +402,17 @@
 .preview-dialog {
   width: min(1100px, calc(100vw - 32px)) !important;
   max-height: 90vh !important;
-  padding: 14px !important;
+  padding: 16px !important;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 .preview-header {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--glass-border);
 }
 .preview-header__name {
   flex: 1;
@@ -423,6 +425,26 @@
 .preview-header__meta {
   font-size: 11px;
   color: var(--text-muted);
+}
+.preview-header__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 160ms ease;
+  flex-shrink: 0;
+}
+.preview-header__close:hover {
+  color: var(--text-primary);
+  background: var(--glass-bg-1);
+  border-color: var(--glass-border-hover);
 }
 .preview-body {
   flex: 1;

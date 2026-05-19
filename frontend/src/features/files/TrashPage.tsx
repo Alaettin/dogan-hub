@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft, MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
+import { MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { Dropdown, DropdownItem } from "../../components/ui/Dropdown";
@@ -52,12 +51,6 @@ export function TrashPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Link to="/dateien" style={{ textDecoration: "none" }}>
-            <GlassButton variant="ghost">
-              <ArrowLeft size={14} />
-              Zurück zu Dateien
-            </GlassButton>
-          </Link>
           {items.length > 0 && (
             <GlassButton
               variant="secondary"

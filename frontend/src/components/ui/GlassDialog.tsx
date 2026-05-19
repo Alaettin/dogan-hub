@@ -25,13 +25,21 @@ export function GlassDialog({
   className,
   showCloseButton = true,
 }: GlassDialogProps) {
+  const hasVisibleTitle = title.trim().length > 0;
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
       <Dialog.Portal>
         <Dialog.Overlay className="glass-dialog-overlay" />
         <Dialog.Content className={cn("glass-dialog-content", className)}>
-          <Dialog.Title className="glass-dialog-title">{title}</Dialog.Title>
+          <Dialog.Title
+            className={cn(
+              "glass-dialog-title",
+              !hasVisibleTitle && "glass-dialog-title--hidden",
+            )}
+          >
+            {hasVisibleTitle ? title : "Dialog"}
+          </Dialog.Title>
           {description && (
             <Dialog.Description className="glass-dialog-description">
               {description}
@@ -42,7 +50,13 @@ export function GlassDialog({
               <X size={18} />
             </Dialog.Close>
           )}
-          <div style={{ marginTop: description ? 16 : 12 }}>{children}</div>
+          <div
+            style={{
+              marginTop: hasVisibleTitle ? (description ? 16 : 12) : 0,
+            }}
+          >
+            {children}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
