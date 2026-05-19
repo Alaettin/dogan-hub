@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 import { FieldDisplay } from "../fields/FieldDisplay";
 import type { FieldDef } from "../fields/field-types";
 import { useDeleteEntry, type Entry } from "../useEntries";
+import { cn } from "../../../lib/cn";
 import "./views.css";
 import "../databases.css";
 
@@ -13,6 +14,9 @@ interface EntryTableProps {
   order: "asc" | "desc" | undefined;
   onSortChange: (sort: string | undefined, order: "asc" | "desc" | undefined) => void;
   onEdit: (entry: Entry) => void;
+  selectedIds: Set<string>;
+  onToggleSelected: (id: string) => void;
+  onToggleAll: () => void;
 }
 
 export function EntryTable({
@@ -23,11 +27,14 @@ export function EntryTable({
   order,
   onSortChange,
   onEdit,
+  selectedIds,
+  onToggleSelected,
+  onToggleAll,
 }: EntryTableProps) {
   if (entries.length === 0) {
     return (
       <div className="entry-table__empty">
-        Keine Einträge — Filter aufheben oder neu anlegen.
+        Keine Einträge — Suche/Filter aufheben oder neu anlegen.
       </div>
     );
   }
@@ -40,10 +47,24 @@ export function EntryTable({
     }
   }
 
+  const allSelected = entries.length > 0 && entries.every((e) => selectedIds.has(e.id));
+  const someSelected = entries.some((e) => selectedIds.has(e.id));
+
   return (
     <table className="entry-table">
       <thead>
         <tr>
+          <th className="entry-table__select">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected && !allSelected;
+              }}
+              onChange={onToggleAll}
+              aria-label="Alle auswählen"
+            />
+          </th>
           {visibleFields.map((f) => (
             <th
               key={f.id}
@@ -64,6 +85,8 @@ export function EntryTable({
             entry={e}
             visibleFields={visibleFields}
             databaseId={databaseId}
+            selected={selectedIds.has(e.id)}
+            onToggleSelected={() => onToggleSelected(e.id)}
             onEdit={() => onEdit(e)}
           />
         ))}
@@ -76,12 +99,32 @@ interface EntryRowProps {
   entry: Entry;
   visibleFields: FieldDef[];
   databaseId: string;
+  selected: boolean;
+  onToggleSelected: () => void;
   onEdit: () => void;
 }
-function EntryRow({ entry, visibleFields, databaseId, onEdit }: EntryRowProps) {
+function EntryRow({
+  entry,
+  visibleFields,
+  databaseId,
+  selected,
+  onToggleSelected,
+  onEdit,
+}: EntryRowProps) {
   const remove = useDeleteEntry(entry.id, databaseId);
   return (
-    <tr onClick={onEdit}>
+    <tr
+      className={cn(selected && "entry-table__row--selected")}
+      onClick={onEdit}
+    >
+      <td className="entry-table__select" onClick={(e) => e.stopPropagation()}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelected}
+          aria-label="Eintrag auswählen"
+        />
+      </td>
       {visibleFields.map((f) => (
         <td key={f.id}>
           <FieldDisplay field={f} value={entry.data[f.key]} />

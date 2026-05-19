@@ -22,6 +22,7 @@ export interface EntryListParams {
   offset?: number;
   sort?: string;
   order?: "asc" | "desc";
+  search?: string;
   filters?: FilterCondition[];
 }
 
@@ -33,6 +34,7 @@ function buildEntryQuery(params: EntryListParams): string {
   sp.set("offset", String(params.offset ?? 0));
   if (params.sort) sp.set("sort", params.sort);
   if (params.order) sp.set("order", params.order);
+  if (params.search && params.search.trim()) sp.set("search", params.search.trim());
   if (params.filters && params.filters.length > 0) {
     sp.set("filter", JSON.stringify(params.filters));
   }

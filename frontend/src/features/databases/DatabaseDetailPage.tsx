@@ -23,6 +23,8 @@ import { SortMenu } from "./views/SortMenu";
 import { FilterBuilder } from "./views/FilterBuilder";
 import { SavedViewsBar } from "./views/SavedViewsBar";
 import { SaveViewDialog } from "./views/SaveViewDialog";
+import { SearchInput } from "./views/SearchInput";
+import { BulkBar } from "./views/BulkBar";
 import { EntryTable } from "./views/EntryTable";
 import { EntryCards } from "./views/EntryCards";
 import { EntryList } from "./views/EntryList";
@@ -71,6 +73,7 @@ export function DatabaseDetailPage() {
   const entries = useEntries(id, {
     sort: viewConfig.sort,
     order: viewConfig.order,
+    search: viewConfig.search,
     filters: viewConfig.filters,
   });
 
@@ -78,6 +81,18 @@ export function DatabaseDetailPage() {
   const [entryOpen, setEntryOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined);
   const [saveViewOpen, setSaveViewOpen] = useState(false);
+
+  // Bulk-Selection: bei jeder Filter/Sort/Search/View-Änderung leeren
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [
+    viewConfig.view_type,
+    viewConfig.sort,
+    viewConfig.order,
+    viewConfig.search,
+    viewConfig.filters,
+  ]);
 
   if (db.isLoading) {
     return <div style={{ color: "var(--text-muted)", fontSize: 14 }}>Lade…</div>;
@@ -194,6 +209,10 @@ export function DatabaseDetailPage() {
           )}
 
           <div className="view-toolbar">
+            <SearchInput
+              value={viewConfig.search ?? ""}
+              onChange={(search) => updateView({ search: search || undefined })}
+            />
             <SortMenu
               schema={schema}
               sort={viewConfig.sort}
@@ -228,6 +247,29 @@ export function DatabaseDetailPage() {
                 order={viewConfig.order}
                 onSortChange={(sort, order) => updateView({ sort, order })}
                 onEdit={openEdit}
+                selectedIds={selectedIds}
+                onToggleSelected={(id) =>
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(id)) next.delete(id);
+                    else next.add(id);
+                    return next;
+                  })
+                }
+                onToggleAll={() =>
+                  setSelectedIds((prev) => {
+                    const visible = entryList.map((e) => e.id);
+                    const allSelected = visible.every((id) => prev.has(id));
+                    if (allSelected) {
+                      const next = new Set(prev);
+                      visible.forEach((id) => next.delete(id));
+                      return next;
+                    }
+                    const next = new Set(prev);
+                    visible.forEach((id) => next.add(id));
+                    return next;
+                  })
+                }
               />
             </GlassPanel>
           )}
@@ -262,6 +304,11 @@ export function DatabaseDetailPage() {
         onOpenChange={setSaveViewOpen}
         databaseId={db.data.id}
         config={viewConfig}
+      />
+      <BulkBar
+        databaseId={db.data.id}
+        selectedIds={Array.from(selectedIds)}
+        onClear={() => setSelectedIds(new Set())}
       />
     </div>
   );

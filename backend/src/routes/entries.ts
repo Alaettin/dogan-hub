@@ -4,6 +4,7 @@ import { getUserScopedClient } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
 import { recordEvent } from "../services/audit.service.js";
 import {
+  bulkDeleteSchema,
   createEntrySchema,
   listEntriesQuerySchema,
   updateEntrySchema,
@@ -19,7 +20,9 @@ entriesRouter.get(
   async (req, res, next) => {
     try {
       if (!req.user) throw errors.unauthorized();
-      const { limit, offset, sort, order, filter } = listEntriesQuerySchema.parse(req.query);
+      const { limit, offset, sort, order, filter, search } = listEntriesQuerySchema.parse(
+        req.query,
+      );
       const client = getUserScopedClient(req.user.accessToken);
 
       let query = client
@@ -32,6 +35,14 @@ entriesRouter.get(
         for (const cond of filter) {
           query = applyFilter(query, cond);
         }
+      }
+
+      // Volltextsuche über search_vector (GIN-indiziert)
+      if (search && search.trim().length > 0) {
+        query = query.textSearch("search_vector", search.trim(), {
+          config: "german",
+          type: "websearch",
+        });
       }
 
       // Sort: created_at|updated_at direkt, sonst über data->>field (text-sort)
@@ -178,6 +189,47 @@ entriesRouter.delete("/entries/:id", requireAuth, async (req, res, next) => {
     });
 
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/entries/bulk-delete ──────────────────────────────────
+entriesRouter.post("/entries/bulk-delete", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const { ids } = bulkDeleteSchema.parse(req.body);
+    const client = getUserScopedClient(req.user.accessToken);
+
+    // Hole existing für audit-metadata
+    const { data: existing, error: selErr } = await client
+      .from("entries")
+      .select("id, database_id")
+      .in("id", ids);
+    if (selErr) throw errors.internal("Bulk lookup failed");
+
+    const accessibleIds = (existing ?? []).map((e) => e.id);
+    if (accessibleIds.length === 0) {
+      res.status(200).json({ deleted: 0 });
+      return;
+    }
+
+    const { error: delErr } = await client.from("entries").delete().in("id", accessibleIds);
+    if (delErr) throw errors.internal("Bulk delete failed");
+
+    // Pro Eintrag Audit-Event (fire-and-forget, sequenziell weil services nicht parallel-safe)
+    for (const row of existing ?? []) {
+      await recordEvent({
+        user_id: req.user.id,
+        action: "delete",
+        resource_type: "entry",
+        resource_id: row.id,
+        metadata: { database_id: row.database_id, bulk: true },
+        ip: req.ip,
+      });
+    }
+
+    res.status(200).json({ deleted: accessibleIds.length });
   } catch (err) {
     next(err);
   }

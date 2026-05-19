@@ -32,6 +32,7 @@ export const listEntriesQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   sort: sortKeySchema.optional(),
   order: z.enum(["asc", "desc"]).default("desc"),
+  search: z.string().max(200).optional(),
   filter: z
     .string()
     .optional()
@@ -48,6 +49,11 @@ export const listEntriesQuerySchema = z.object({
     }),
 });
 
+export const bulkDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(200),
+});
+
 export type CreateEntryInput = z.infer<typeof createEntrySchema>;
 export type UpdateEntryInput = z.infer<typeof updateEntrySchema>;
 export type ListEntriesQuery = z.infer<typeof listEntriesQuerySchema>;
+export type BulkDeleteInput = z.infer<typeof bulkDeleteSchema>;

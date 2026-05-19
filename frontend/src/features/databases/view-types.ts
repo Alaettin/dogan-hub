@@ -26,6 +26,7 @@ export interface ViewConfig {
   view_type: ViewType;
   sort?: string;
   order?: "asc" | "desc";
+  search?: string;
   filters?: FilterCondition[];
   columns?: string[];
 }
@@ -78,6 +79,7 @@ export function encodeViewToParams(config: ViewConfig): URLSearchParams {
   sp.set("view", config.view_type);
   if (config.sort) sp.set("sort", config.sort);
   if (config.order) sp.set("order", config.order);
+  if (config.search && config.search.trim()) sp.set("search", config.search.trim());
   if (config.filters && config.filters.length > 0) {
     sp.set("filter", JSON.stringify(config.filters));
   }
@@ -93,6 +95,7 @@ export function decodeViewFromParams(sp: URLSearchParams): ViewConfig {
   const sort = sp.get("sort") ?? undefined;
   const orderRaw = sp.get("order");
   const order = orderRaw === "asc" || orderRaw === "desc" ? orderRaw : undefined;
+  const search = sp.get("search") ?? undefined;
 
   let filters: FilterCondition[] | undefined;
   const filterRaw = sp.get("filter");
@@ -105,7 +108,7 @@ export function decodeViewFromParams(sp: URLSearchParams): ViewConfig {
     }
   }
 
-  return { view_type, sort, order, filters };
+  return { view_type, sort, order, search, filters };
 }
 
 // Vergleicht zwei View-Configs — für "ist aktive Saved View?"-Highlight
@@ -118,6 +121,7 @@ function normalize(c: ViewConfig): ViewConfig {
     view_type: c.view_type,
     sort: c.sort,
     order: c.sort ? c.order ?? "desc" : undefined,
+    search: c.search && c.search.trim() ? c.search.trim() : undefined,
     filters: c.filters && c.filters.length > 0 ? c.filters : undefined,
     columns: c.columns && c.columns.length > 0 ? c.columns : undefined,
   };
