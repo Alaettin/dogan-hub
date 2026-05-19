@@ -1,4 +1,4 @@
-# Dogan-Hub
+# MyHub
 
 > Persönliches Operationssystem als modulare Web-App.
 
@@ -62,7 +62,7 @@ cd backend  && npm run build
 ## Repo-Struktur
 
 ```
-dogan-hub/
+myhub/
 ├── frontend/                          # Vite + React + TS + Glass-Design
 │   ├── src/design/                    # Tokens + MeshBackground
 │   ├── src/components/ui/             # GlassCard, GlassButton, GlassDialog,

@@ -13,7 +13,7 @@ export interface AuditEntry {
   ip?: string | null;
 }
 
-const IP_HASH_SALT = process.env.AUDIT_IP_HASH_SALT ?? "dogan-hub-audit-salt-v1";
+const IP_HASH_SALT = process.env.AUDIT_IP_HASH_SALT ?? "myhub-audit-salt-v1";
 
 export function hashIp(ip: string | null | undefined): string | null {
   if (!ip) return null;

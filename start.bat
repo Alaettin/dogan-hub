@@ -4,7 +4,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ============================================
-echo   Dogan-Hub - Starte Dev-Server
+echo   MyHub - Starte Dev-Server
 echo ============================================
 echo.
 
@@ -31,7 +31,7 @@ echo.
 
 REM /D setzt das Working-Directory ohne cd zu brauchen.
 REM cmd /k haelt das Fenster offen, auch wenn npm crasht.
-start "Dogan-Hub Backend"  /D "%~dp0backend"  cmd /k npm run dev
-start "Dogan-Hub Frontend" /D "%~dp0frontend" cmd /k npm run dev
+start "MyHub Backend"  /D "%~dp0backend"  cmd /k npm run dev
+start "MyHub Frontend" /D "%~dp0frontend" cmd /k npm run dev
 
 endlocal

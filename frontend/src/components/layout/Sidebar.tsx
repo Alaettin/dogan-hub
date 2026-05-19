@@ -28,7 +28,7 @@ export function Sidebar() {
         <div className="sidebar__brand-mark">
           <Bird size={16} />
         </div>
-        <span className="sidebar__brand-text">Dogan-Hub</span>
+        <span className="sidebar__brand-text">MyHub</span>
       </div>
 
       <nav className="sidebar__nav">

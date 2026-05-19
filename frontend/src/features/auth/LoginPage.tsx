@@ -78,7 +78,7 @@ export function LoginPage() {
             </div>
             <div>
               <h1 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: "-0.5px" }}>
-                Dogan-Hub
+                MyHub
               </h1>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
                 Anmeldung erforderlich

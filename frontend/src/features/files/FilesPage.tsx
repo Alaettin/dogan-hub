@@ -41,7 +41,7 @@ export function FilesPage() {
     input.addEventListener("change", () => {
       const list = input.files;
       if (!list) return;
-      const evt = new CustomEvent("dogan-hub:upload-files", {
+      const evt = new CustomEvent("myhub:upload-files", {
         detail: { files: Array.from(list), folderId: currentFolderId },
       });
       window.dispatchEvent(evt);

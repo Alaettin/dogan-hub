@@ -2,7 +2,7 @@
 
 **Wenn etwas kaputtgeht — hier nachschlagen, nicht raten.**
 
-Dieser Runbook deckt die wahrscheinlichsten Crash-Szenarien für Dogan-Hub
+Dieser Runbook deckt die wahrscheinlichsten Crash-Szenarien für MyHub
 ab und beschreibt Schritt-für-Schritt, was zu tun ist. Die Reihenfolge der
 Szenarien geht von „wahrscheinlich" zu „schlimmster Fall".
 
@@ -14,7 +14,7 @@ Szenarien geht von „wahrscheinlich" zu „schlimmster Fall".
 | -------------------- | ------------------------------------------------------------- |
 | Supabase Dashboard   | https://supabase.com/dashboard → Projekt `ftcgffkxjtxwwmsbmcjz` |
 | VPS-Konsole          | Hetzner Cloud Console (oder Provider deiner Wahl)             |
-| Domain-Registrar     | wo `dogan-hub.de` registriert ist (Namecheap / IONOS / …)      |
+| Domain-Registrar     | wo `myhub.example` registriert ist (Namecheap / IONOS / …)      |
 | Code-Repository      | dieses Verzeichnis + ggf. GitHub-Remote                       |
 | `.env`-Werte         | **lokal** + Password-Manager (Bitwarden o.ä.) — niemals in Git |
 | Backup-Snapshots     | Hetzner → „Backups"-Tab am Server                              |
@@ -102,15 +102,15 @@ Solange kein Backup-Job läuft: **Storage-Verlust ist endgültig.**
 
 ## Szenario 3 — VPS down / Caddy-SSL-Problem
 
-**Symptome:** App nicht erreichbar, `dogan-hub.de` lädt nicht oder liefert
+**Symptome:** App nicht erreichbar, `myhub.example` lädt nicht oder liefert
 „Connection refused".
 
 ### Schritt 1: Diagnose
 
 ```bash
 # Vom lokalen Rechner
-ping dogan-hub.de              # DNS + Erreichbarkeit
-curl -I https://dogan-hub.de   # HTTP-Response
+ping myhub.example              # DNS + Erreichbarkeit
+curl -I https://myhub.example   # HTTP-Response
 
 # Auf dem VPS (per SSH)
 docker ps                       # laufen Container?
@@ -131,7 +131,7 @@ docker logs backend --tail 50  # Backend-Fehler?
 ### Schritt 3: Hard-Reset (wenn Container kaputt)
 
 ```bash
-cd /opt/dogan-hub  # oder wo das Repo liegt
+cd /opt/myhub  # oder wo das Repo liegt
 docker compose down
 docker compose pull          # neueste Images (wenn relevant)
 docker compose up -d --build
@@ -165,8 +165,8 @@ systemctl enable fail2ban
 ### Schritt 3: Repo + Env zurückspielen
 
 ```bash
-mkdir -p /opt/dogan-hub
-cd /opt/dogan-hub
+mkdir -p /opt/myhub
+cd /opt/myhub
 git clone <repo-url> .
 # .env aus Password-Manager wiederherstellen
 nano .env

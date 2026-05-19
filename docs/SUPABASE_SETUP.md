@@ -1,13 +1,13 @@
 # Supabase Setup — Etappe 1
 
-Diese Anleitung führt einmalig durch das Supabase-Projekt-Setup für Dogan-Hub. Dauert ca. 10 Minuten.
+Diese Anleitung führt einmalig durch das Supabase-Projekt-Setup für MyHub. Dauert ca. 10 Minuten.
 
 ## 1. Account & Projekt anlegen
 
 1. Auf https://supabase.com mit `alaettin87@gmail.com` registrieren (oder einloggen)
 2. **New Project** klicken
 3. Einstellungen:
-   - **Name:** `dogan-hub`
+   - **Name:** `myhub`
    - **Database Password:** starkes Passwort — **unbedingt im Passwort-Manager speichern**
    - **Region:** `Europe (Frankfurt) — eu-central-1` (Pflicht wegen DSGVO laut [PLAN.md §4d](../PLAN.md))
    - **Pricing Plan:** Free reicht für Etappe 1. Vor Go-Live auf Pro upgraden (PITR + 30-Tage-Backups)

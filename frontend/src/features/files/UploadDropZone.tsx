@@ -120,8 +120,8 @@ export function UploadDropZone({ folderId, children }: UploadDropZoneProps) {
       if (detail.folderId !== folderId) return;
       detail.files.forEach((f) => void upload(f));
     }
-    window.addEventListener("dogan-hub:upload-files", onUploadEvent);
-    return () => window.removeEventListener("dogan-hub:upload-files", onUploadEvent);
+    window.addEventListener("myhub:upload-files", onUploadEvent);
+    return () => window.removeEventListener("myhub:upload-files", onUploadEvent);
   }, [folderId, upload]);
 
   return (
