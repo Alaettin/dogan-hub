@@ -20,7 +20,9 @@ const envSchema = z.object({
         .filter(Boolean),
     ),
 
-  SENTRY_DSN: z.string().optional(),
+  // Wenn gesetzt, schreibt der Logger zusätzlich in diese Datei mit
+  // täglicher Rotation (siehe pino-roll in lib/logger.ts).
+  LOG_FILE_PATH: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -18,6 +18,7 @@ import { foldersRouter } from "./routes/folders.js";
 import { filesRouter } from "./routes/files.js";
 import { entryFilesRouter } from "./routes/entry-files.js";
 import { searchRouter } from "./routes/search.js";
+import { adminRouter } from "./routes/admin.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/folders", foldersRouter);
 app.use("/api/files", filesRouter);
 app.use("/api", entryFilesRouter);
 app.use("/api/search", searchRouter);
+app.use("/api/admin", adminRouter);
 
 app.use(errorHandler);
 

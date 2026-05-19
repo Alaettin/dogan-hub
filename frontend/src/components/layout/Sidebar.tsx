@@ -56,7 +56,7 @@ export function Sidebar() {
           to="/einstellungen"
           label="Einstellungen"
           icon={<Settings size={16} />}
-          disabled
+          end={false}
         />
       </nav>
 

@@ -1,7 +1,28 @@
 import { Router } from "express";
 import { supabaseService } from "../config/supabase.js";
+import { STORAGE_BUCKET } from "../services/storage.service.js";
 
 export const healthRouter = Router();
+
+interface Component {
+  ok: boolean;
+  latency_ms: number;
+  error?: string;
+}
+
+async function timed<T>(fn: () => Promise<T>): Promise<Component> {
+  const start = Date.now();
+  try {
+    await fn();
+    return { ok: true, latency_ms: Date.now() - start };
+  } catch (err) {
+    return {
+      ok: false,
+      latency_ms: Date.now() - start,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
 
 // Liveness: Prozess läuft.
 healthRouter.get("/live", (_req, res) => {
@@ -10,32 +31,45 @@ healthRouter.get("/live", (_req, res) => {
 
 // Readiness: Supabase erreichbar?
 healthRouter.get("/ready", async (_req, res) => {
-  const start = Date.now();
-  try {
-    // Leichtgewichtiger Roundtrip — countOnly mit head=true holt nur Header
+  const db = await timed(async () => {
     const { error } = await supabaseService
       .from("profiles")
       .select("id", { count: "exact", head: true });
+    if (error) throw new Error(error.message);
+  });
 
-    if (error) {
-      res.status(503).json({
-        status: "degraded",
-        supabase: { ok: false, error: error.message },
-        latency_ms: Date.now() - start,
+  res.status(db.ok ? 200 : 503).json({
+    status: db.ok ? "ok" : "degraded",
+    supabase: db,
+    latency_ms: db.latency_ms,
+  });
+});
+
+// Deep-Health: DB + Auth + Storage einzeln messen, jeweils mit Latenz.
+// Wird vom Monitoring (Uptime Kuma) als detailliertes Probing verwendet.
+healthRouter.get("/deep", async (_req, res) => {
+  const [db, auth, storage] = await Promise.all([
+    timed(async () => {
+      const { error } = await supabaseService
+        .from("profiles")
+        .select("id", { count: "exact", head: true });
+      if (error) throw new Error(error.message);
+    }),
+    timed(async () => {
+      const { error } = await supabaseService.auth.admin.listUsers({ perPage: 1 });
+      if (error) throw new Error(error.message);
+    }),
+    timed(async () => {
+      const { error } = await supabaseService.storage.from(STORAGE_BUCKET).list("", {
+        limit: 1,
       });
-      return;
-    }
+      if (error) throw new Error(error.message);
+    }),
+  ]);
 
-    res.json({
-      status: "ok",
-      supabase: { ok: true },
-      latency_ms: Date.now() - start,
-    });
-  } catch (err) {
-    res.status(503).json({
-      status: "degraded",
-      supabase: { ok: false, error: err instanceof Error ? err.message : String(err) },
-      latency_ms: Date.now() - start,
-    });
-  }
+  const allOk = db.ok && auth.ok && storage.ok;
+  res.status(allOk ? 200 : 503).json({
+    status: allOk ? "ok" : "degraded",
+    components: { db, auth, storage },
+  });
 });

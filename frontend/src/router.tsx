@@ -19,6 +19,19 @@ const FilesPage = lazy(() =>
 const TrashPage = lazy(() =>
   import("./features/files/TrashPage").then((m) => ({ default: m.TrashPage })),
 );
+const SettingsPage = lazy(() =>
+  import("./features/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
+const UserManagementPage = lazy(() =>
+  import("./features/settings/UserManagementPage").then((m) => ({
+    default: m.UserManagementPage,
+  })),
+);
+const UserDetailPage = lazy(() =>
+  import("./features/settings/UserDetailPage").then((m) => ({
+    default: m.UserDetailPage,
+  })),
+);
 
 function PageFallback() {
   return (
@@ -77,6 +90,33 @@ export const router = createBrowserRouter([
                 <TrashPage />
               </Suspense>
             ),
+          },
+          {
+            path: "/einstellungen",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <SettingsPage />
+              </Suspense>
+            ),
+            children: [
+              { index: true, element: <Navigate to="/einstellungen/benutzer" replace /> },
+              {
+                path: "benutzer",
+                element: (
+                  <Suspense fallback={<PageFallback />}>
+                    <UserManagementPage />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "benutzer/:id",
+                element: (
+                  <Suspense fallback={<PageFallback />}>
+                    <UserDetailPage />
+                  </Suspense>
+                ),
+              },
+            ],
           },
         ],
       },

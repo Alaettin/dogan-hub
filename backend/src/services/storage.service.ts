@@ -50,6 +50,26 @@ export async function deleteObjects(storagePaths: string[]): Promise<void> {
   }
 }
 
+// Lädt die ersten N Bytes eines Storage-Objects (für Magic-Bytes-Verifikation).
+// 4100 Bytes reichen laut file-type-Dokumentation für alle unterstützten Formate.
+// Nutzt signed URL + HTTP Range — vermeidet vollen Download bei großen Files.
+export async function downloadHeadBytes(
+  storagePath: string,
+  n = 4100,
+): Promise<Buffer | null> {
+  const { data, error } = await supabaseService.storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrl(storagePath, 60);
+  if (error || !data?.signedUrl) return null;
+
+  const res = await fetch(data.signedUrl, {
+    headers: { Range: `bytes=0-${n - 1}` },
+  });
+  if (!res.ok && res.status !== 206) return null;
+  const buf = Buffer.from(await res.arrayBuffer());
+  return buf;
+}
+
 export async function getObjectMetadata(storagePath: string): Promise<{ size: number } | null> {
   const dir = storagePath.split("/").slice(0, -1).join("/");
   const filename = storagePath.split("/").pop();

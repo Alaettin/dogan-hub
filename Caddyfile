@@ -2,11 +2,26 @@
     encode zstd gzip
 
     header {
+        # ─── Standard-Security-Headers ─────────────────────────────────
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
-        Permissions-Policy "geolocation=(), camera=(), microphone=()"
+        Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
+
+        # ─── Content-Security-Policy ───────────────────────────────────
+        # default-src 'self'      : nur eigene Domain
+        # script-src              : Vite-Build hat keine Inline-Scripts (Modules)
+        # style-src 'unsafe-inline': Glass-Design braucht inline styles
+        #                            (style-Attribute, CSS-Variablen-Sets in JSX)
+        # connect-src             : eigene API + Supabase REST/Realtime/Storage
+        # img-src                 : data: für Initialen-Avatare, blob: für Previews,
+        #                            https: für extern eingebettete Avatare
+        # frame-ancestors 'none'  : Schutz gegen Clickjacking (redundant zu X-Frame-Options)
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: blob: https:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+        # Server-Header weglassen — gibt Angreifern keinen Hinweis auf Caddy-Version
+        -Server
     }
 
     handle_path /api/* {

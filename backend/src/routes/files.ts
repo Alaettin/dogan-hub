@@ -13,13 +13,16 @@ import {
 import {
   MAX_FILE_SIZE_BYTES,
   sanitizeFilename,
+  validateMagicBytes,
 } from "../services/file.service.js";
 import {
   buildStoragePath,
   deleteObjects,
+  downloadHeadBytes,
   getSignedDownloadUrl,
   getSignedUploadUrl,
 } from "../services/storage.service.js";
+import { logger } from "../lib/logger.js";
 
 export const filesRouter = Router();
 
@@ -130,10 +133,42 @@ filesRouter.post("/:id/commit", requireAuth, async (req, res, next) => {
 
     const { data: file } = await client
       .from("files")
-      .select("id, folder_id, name, size_bytes")
+      .select("id, folder_id, name, size_bytes, mime_type, storage_path")
       .eq("id", req.params.id)
       .maybeSingle();
     if (!file) throw errors.notFound("File not found");
+
+    // Magic-Bytes-Verifikation: declared MIME muss zum Datei-Inhalt passen.
+    // Schützt davor, dass eine .exe als image/png hochgeladen wird.
+    // Bei unerkanntem Format (Text, unbekannt) wird durchgewinkt — Validation
+    // ist nur Reject-by-Mismatch, nicht Accept-by-Detection.
+    const head = await downloadHeadBytes(file.storage_path);
+    if (head) {
+      const verdict = await validateMagicBytes(head, file.mime_type);
+      if (!verdict.ok && verdict.detectedMime) {
+        // Definite Mismatch — Datei aus Storage + DB entfernen.
+        try {
+          await deleteObjects([file.storage_path]);
+        } catch (cleanupErr) {
+          logger.warn(
+            { err: cleanupErr, path: file.storage_path },
+            "magic-bytes cleanup failed",
+          );
+        }
+        await supabaseService.from("files").delete().eq("id", file.id);
+        throw errors.badRequest(
+          `Datei-Inhalt passt nicht zum angegebenen Typ (deklariert: ${file.mime_type}, erkannt: ${verdict.detectedMime}). Upload abgelehnt.`,
+        );
+      }
+      // Optional: erkannte MIME ist akkurater als Browser-Declaration
+      // → DB-Row aktualisieren, damit später korrekt gerendert wird.
+      if (verdict.ok && verdict.detectedMime && verdict.detectedMime !== file.mime_type) {
+        await client
+          .from("files")
+          .update({ mime_type: verdict.detectedMime })
+          .eq("id", file.id);
+      }
+    }
 
     await recordEvent({
       user_id: req.user.id,
