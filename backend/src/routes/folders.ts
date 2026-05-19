@@ -5,6 +5,7 @@ import { getUserScopedClient } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
 import { recordEvent } from "../services/audit.service.js";
 import { createFolderSchema, updateFolderSchema } from "../schemas/folder.schema.js";
+import { softDeleteFolderTreeFiles } from "../services/folder.service.js";
 
 export const foldersRouter = Router();
 
@@ -181,6 +182,8 @@ foldersRouter.patch("/:id", requireAuth, async (req, res, next) => {
 });
 
 // ─── DELETE /api/folders/:id ─────────────────────────────────────────
+// Files im Sub-Tree gehen in den Papierkorb (Soft-Delete). Sub-Folders
+// selbst werden via DB-Cascade hart gelöscht — kein Folder-Trash.
 foldersRouter.delete("/:id", requireAuth, async (req, res, next) => {
   try {
     if (!req.user) throw errors.unauthorized();
@@ -188,10 +191,12 @@ foldersRouter.delete("/:id", requireAuth, async (req, res, next) => {
 
     const { data: existing } = await client
       .from("folders")
-      .select("id, name")
+      .select("id, name, path")
       .eq("id", req.params.id)
       .maybeSingle();
     if (!existing) throw errors.notFound("Folder not found");
+
+    const { softDeletedFileCount } = await softDeleteFolderTreeFiles(client, existing);
 
     const { error } = await client.from("folders").delete().eq("id", req.params.id);
     if (error) throw errors.internal("Delete failed");
@@ -201,7 +206,7 @@ foldersRouter.delete("/:id", requireAuth, async (req, res, next) => {
       action: "delete",
       resource_type: "folder",
       resource_id: existing.id,
-      metadata: { name: existing.name },
+      metadata: { name: existing.name, soft_deleted_file_count: softDeletedFileCount },
       ip: req.ip,
     });
 
