@@ -1,0 +1,125 @@
+.field-textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 10px 14px;
+  background: var(--glass-bg-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  transition: all 180ms ease;
+}
+.field-textarea:hover {
+  border-color: var(--glass-border-hover);
+}
+.field-textarea:focus {
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+.field-select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--glass-bg-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+.field-select:hover {
+  border-color: var(--glass-border-hover);
+}
+.field-select:focus {
+  border-color: var(--text-accent);
+}
+.field-select option {
+  background: var(--bg-base-mid);
+  color: var(--text-primary);
+}
+
+.field-multiselect {
+  min-height: 80px;
+}
+
+.field-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.field-toggle__switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--glass-bg-1);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  transition: all 180ms ease;
+}
+
+.field-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: all 180ms ease;
+}
+
+.field-toggle--on .field-toggle__switch {
+  background: var(--glass-bg-accent);
+  border-color: var(--glass-border-accent);
+}
+.field-toggle--on .field-toggle__thumb {
+  left: calc(100% - 16px);
+  background: var(--text-accent);
+}
+
+.field-toggle__label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.field-rating {
+  display: inline-flex;
+  gap: 4px;
+}
+.field-rating__star {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-muted);
+  transition: color 180ms ease, transform 140ms ease;
+}
+.field-rating__star:hover {
+  color: var(--text-warning);
+  transform: scale(1.1);
+}
+.field-rating__star--filled {
+  color: var(--text-warning);
+}
+
+.field-currency {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 8px;
+}
+
+.field-display {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.field-display--muted {
+  color: var(--text-muted);
+}

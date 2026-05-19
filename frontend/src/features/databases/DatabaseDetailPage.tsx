@@ -1,16 +1,28 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Sparkles, Plus, Archive } from "lucide-react";
+import { ArrowLeft, Archive, Plus, Settings2, Trash2 } from "lucide-react";
 import { GlassCard } from "../../components/ui/GlassCard";
 import { GlassButton } from "../../components/ui/GlassButton";
+import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useDatabase } from "./useDatabases";
+import { useDeleteEntry, useEntries, type Entry } from "./useEntries";
 import { getIconComponent } from "./icon-picker";
 import { getColorOption } from "./color-picker";
 import { DatabaseMenu } from "./DatabaseMenu";
+import { SchemaEditor } from "./SchemaEditor";
+import { EntryFormDialog } from "./EntryFormDialog";
+import { FieldDisplay } from "./fields/FieldDisplay";
+import type { FieldDef } from "./fields/field-types";
 import "./databases.css";
 
 export function DatabaseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const db = useDatabase(id);
+  const entries = useEntries(id);
+
+  const [schemaOpen, setSchemaOpen] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined);
 
   if (db.isLoading) {
     return <div style={{ color: "var(--text-muted)", fontSize: 14 }}>Lade…</div>;
@@ -35,7 +47,11 @@ export function DatabaseDetailPage() {
 
   const Icon = getIconComponent(db.data.icon);
   const color = getColorOption(db.data.color);
-  const fieldCount = Array.isArray(db.data.schema) ? db.data.schema.length : 0;
+  const schema = (db.data.schema ?? []) as FieldDef[];
+  const fieldCount = schema.length;
+  const visibleFields = schema.filter((f) => f.visible_in_table !== false).slice(0, 5);
+  const visibleSchema = visibleFields.length > 0 ? visibleFields : schema.slice(0, 5);
+  const entryList = entries.data?.items ?? [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 1180 }}>
@@ -46,7 +62,9 @@ export function DatabaseDetailPage() {
           </div>
           <div>
             <h1 className="db-detail-name">{db.data.name}</h1>
-            {db.data.description && <p className="db-detail-description">{db.data.description}</p>}
+            {db.data.description && (
+              <p className="db-detail-description">{db.data.description}</p>
+            )}
             <p
               style={{
                 margin: "6px 0 0",
@@ -56,12 +74,31 @@ export function DatabaseDetailPage() {
                 letterSpacing: "0.5px",
               }}
             >
-              {fieldCount} {fieldCount === 1 ? "Feld" : "Felder"}
+              {fieldCount} {fieldCount === 1 ? "Feld" : "Felder"} ·{" "}
+              {entries.data?.total ?? 0}{" "}
+              {(entries.data?.total ?? 0) === 1 ? "Eintrag" : "Einträge"}
               {db.data.archived && " · Archiviert"}
             </p>
           </div>
         </div>
-        <DatabaseMenu database={db.data} />
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <GlassButton variant="secondary" onClick={() => setSchemaOpen(true)}>
+            <Settings2 size={14} />
+            Schema
+          </GlassButton>
+          <GlassButton
+            variant="primary"
+            onClick={() => {
+              setEditingEntry(undefined);
+              setEntryOpen(true);
+            }}
+            disabled={schema.length === 0}
+          >
+            <Plus size={14} />
+            Neuer Eintrag
+          </GlassButton>
+          <DatabaseMenu database={db.data} />
+        </div>
       </div>
 
       {db.data.archived && (
@@ -81,54 +118,114 @@ export function DatabaseDetailPage() {
         </GlassCard>
       )}
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 16,
-        }}
-      >
-        <GlassCard
-          variant="accent"
-          style={{
-            padding: 20,
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Sparkles size={16} style={{ color: "var(--text-accent)" }} />
-            <strong style={{ fontSize: 14 }}>Schema-Editor</strong>
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-            Felder definieren, Field-Types auswählen, Required-Flags setzen — kommt in Etappe 3b.2.
+      {schema.length === 0 && (
+        <GlassCard variant="accent" style={{ padding: 24 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>Definiere erst das Schema</h3>
+          <p style={{ marginTop: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+            Klicke oben auf "Schema" um Felder hinzuzufügen. Erst dann kannst du Einträge anlegen.
           </p>
-          <GlassButton variant="secondary" disabled>
-            Schema bearbeiten
-          </GlassButton>
         </GlassCard>
+      )}
 
-        <GlassCard
-          style={{
-            padding: 20,
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Plus size={16} style={{ color: "var(--text-accent)" }} />
-            <strong style={{ fontSize: 14 }}>Einträge</strong>
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-            Daten anlegen, in Tabelle / Karten / Liste anzeigen, filtern — kommt in 3b.2 und 3b.3.
-          </p>
-          <GlassButton variant="secondary" disabled>
-            Neuer Eintrag
-          </GlassButton>
-        </GlassCard>
-      </section>
+      {schema.length > 0 && (
+        <GlassPanel style={{ overflow: "hidden" }}>
+          <EntryQuickTable
+            entries={entryList}
+            visibleFields={visibleSchema}
+            databaseId={db.data.id}
+            onEdit={(entry) => {
+              setEditingEntry(entry);
+              setEntryOpen(true);
+            }}
+          />
+        </GlassPanel>
+      )}
+
+      <SchemaEditor open={schemaOpen} onOpenChange={setSchemaOpen} database={db.data} />
+      <EntryFormDialog
+        open={entryOpen}
+        onOpenChange={setEntryOpen}
+        databaseId={db.data.id}
+        schema={schema}
+        mode={editingEntry ? "edit" : "create"}
+        entry={editingEntry}
+      />
     </div>
+  );
+}
+
+interface EntryQuickTableProps {
+  entries: Entry[];
+  visibleFields: FieldDef[];
+  databaseId: string;
+  onEdit: (entry: Entry) => void;
+}
+
+function EntryQuickTable({ entries, visibleFields, databaseId, onEdit }: EntryQuickTableProps) {
+  if (entries.length === 0) {
+    return (
+      <div className="entry-table__empty">
+        Noch keine Einträge. Klick oben auf "Neuer Eintrag".
+      </div>
+    );
+  }
+
+  return (
+    <table className="entry-table">
+      <thead>
+        <tr>
+          {visibleFields.map((f) => (
+            <th key={f.id}>{f.label}</th>
+          ))}
+          <th className="entry-table__actions" />
+        </tr>
+      </thead>
+      <tbody>
+        {entries.map((e) => (
+          <EntryRow
+            key={e.id}
+            entry={e}
+            visibleFields={visibleFields}
+            databaseId={databaseId}
+            onEdit={() => onEdit(e)}
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+interface EntryRowProps {
+  entry: Entry;
+  visibleFields: FieldDef[];
+  databaseId: string;
+  onEdit: () => void;
+}
+function EntryRow({ entry, visibleFields, databaseId, onEdit }: EntryRowProps) {
+  const remove = useDeleteEntry(entry.id, databaseId);
+
+  return (
+    <tr onClick={onEdit}>
+      {visibleFields.map((f) => (
+        <td key={f.id}>
+          <FieldDisplay field={f} value={entry.data[f.key]} />
+        </td>
+      ))}
+      <td className="entry-table__actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="glass-button glass-button--ghost"
+          aria-label="Eintrag löschen"
+          onClick={async () => {
+            if (confirm("Eintrag wirklich löschen?")) {
+              await remove.mutateAsync();
+            }
+          }}
+          style={{ color: "var(--text-danger)", padding: "6px 8px" }}
+        >
+          <Trash2 size={14} />
+        </button>
+      </td>
+    </tr>
   );
 }
