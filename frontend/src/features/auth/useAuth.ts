@@ -67,6 +67,10 @@ const useAuthStore = create<AuthState>((set, get) => ({
     }
     set({ session: data.session, user: data.user, loading: false });
     await get().refreshProfile();
+    // Audit-Eintrag schreiben — niemals blockieren falls Backend down ist.
+    apiFetch("/auth/log-login", { method: "POST" }).catch((err) => {
+      console.warn("[useAuth] log-login failed:", err);
+    });
   },
 
   signOut: async () => {

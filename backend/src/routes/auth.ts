@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { getUserScopedClient } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
+import { recordEvent } from "../services/audit.service.js";
 
 export const authRouter = Router();
 
@@ -28,6 +29,23 @@ authRouter.get("/me", requireAuth, async (req, res, next) => {
       },
       profile,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/log-login — schreibt einen audit_log-Eintrag action='login'.
+// Frontend ruft das einmal nach erfolgreichem supabase.auth.signInWithPassword().
+authRouter.post("/auth/log-login", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    await recordEvent({
+      user_id: req.user.id,
+      action: "login",
+      resource_type: "auth",
+      ip: req.ip,
+    });
+    res.status(204).end();
   } catch (err) {
     next(err);
   }
