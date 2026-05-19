@@ -1,0 +1,38 @@
+# ───────── Node ─────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.pnpm-store/
+
+# ───────── Build output ─────────
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# ───────── Env / Secrets ─────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ───────── Docker / Volumes ─────────
+caddy_data/
+caddy_config/
+logs/
+
+# ───────── IDE / OS ─────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ───────── Misc ─────────
+coverage/
+.nyc_output/
+*.log
