@@ -28,7 +28,15 @@ services:
     expose:
       - "4000"
     env_file: .env
+    # Logs persistent halten — überleben Container-Neustarts.
+    # pino-roll rotiert täglich, behält 14 Tage (siehe lib/logger.ts).
+    # Override LOG_FILE_PATH in .env wenn anderer Pfad gewünscht.
+    environment:
+      LOG_FILE_PATH: ${LOG_FILE_PATH:-/app/logs/app.log}
+    volumes:
+      - backend_logs:/app/logs
 
 volumes:
   caddy_data:
   caddy_config:
+  backend_logs:
