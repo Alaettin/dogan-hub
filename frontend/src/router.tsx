@@ -13,6 +13,9 @@ const DatabaseDetailPage = lazy(() =>
     default: m.DatabaseDetailPage,
   })),
 );
+const FilesPage = lazy(() =>
+  import("./features/files/FilesPage").then((m) => ({ default: m.FilesPage })),
+);
 
 function PageFallback() {
   return (
@@ -53,6 +56,14 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageFallback />}>
                 <DatabaseDetailPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/dateien",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <FilesPage />
               </Suspense>
             ),
           },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Database, ShoppingCart, Settings, Bird, Plus } from "lucide-react";
+import { LayoutDashboard, Database, ShoppingCart, Settings, Bird, Plus, FolderOpen } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useDatabases } from "../../features/databases/useDatabases";
 import { getIconComponent } from "../../features/databases/icon-picker";
@@ -41,7 +41,8 @@ export function Sidebar() {
 
         <div className="sidebar__section-label">Daten</div>
         <nav className="sidebar__nav sidebar__db-section">
-          <SidebarLink to="/databases" label="Übersicht" icon={<Database size={16} />} />
+          <SidebarLink to="/databases" label="Datenbanken" icon={<Database size={16} />} />
+          <SidebarLink to="/dateien" label="Dateien" icon={<FolderOpen size={16} />} />
           {databases.data?.map((db) => {
             const Icon = getIconComponent(db.icon);
             const color = getColorOption(db.color);
@@ -80,7 +81,7 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <div className="sidebar__footer">Etappe 3b.1</div>
+        <div className="sidebar__footer">Etappe 3c.1</div>
       </aside>
 
       <CreateDatabaseDialog open={createOpen} onOpenChange={setCreateOpen} />

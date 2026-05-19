@@ -14,6 +14,8 @@ import { dashboardRouter } from "./routes/dashboard.js";
 import { databasesRouter, databaseTemplatesRouter } from "./routes/databases.js";
 import { entriesRouter } from "./routes/entries.js";
 import { databaseViewsRouter } from "./routes/database-views.js";
+import { foldersRouter } from "./routes/folders.js";
+import { filesRouter } from "./routes/files.js";
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use("/api/databases", databasesRouter);
 app.use("/api/database-templates", databaseTemplatesRouter);
 app.use("/api", entriesRouter);
 app.use("/api", databaseViewsRouter);
+app.use("/api/folders", foldersRouter);
+app.use("/api/files", filesRouter);
 
 app.use(errorHandler);
 

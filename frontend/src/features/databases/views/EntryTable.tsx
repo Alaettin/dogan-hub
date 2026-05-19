@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 import { FieldDisplay } from "../fields/FieldDisplay";
 import type { FieldDef } from "../fields/field-types";
 import { useDeleteEntry, type Entry } from "../useEntries";
+import { useConfirm } from "../../../components/ui/ConfirmDialog";
 import { cn } from "../../../lib/cn";
 import "./views.css";
 import "../databases.css";
@@ -112,6 +113,7 @@ function EntryRow({
   onEdit,
 }: EntryRowProps) {
   const remove = useDeleteEntry(entry.id, databaseId);
+  const confirm = useConfirm();
   return (
     <tr
       className={cn(selected && "entry-table__row--selected")}
@@ -136,9 +138,13 @@ function EntryRow({
           className="glass-button glass-button--ghost"
           aria-label="Eintrag löschen"
           onClick={async () => {
-            if (confirm("Eintrag wirklich löschen?")) {
-              await remove.mutateAsync();
-            }
+            const ok = await confirm({
+              title: "Eintrag löschen?",
+              description: "Der Eintrag wird unwiderruflich entfernt.",
+              confirmLabel: "Löschen",
+              destructive: true,
+            });
+            if (ok) await remove.mutateAsync();
           }}
           style={{ color: "var(--text-danger)", padding: "6px 8px" }}
         >
