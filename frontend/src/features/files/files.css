@@ -533,3 +533,239 @@
   font-size: 10px;
   color: var(--text-muted);
 }
+
+/* ── Share-Dialog ─────────────────────────────────────────── */
+/* Erweitert den Dialog auf 680px, damit Radio-Cards + 4 TTL-Buttons
+   + Share-Liste in einer Reihe Platz haben. */
+.share-dialog-wide {
+  width: min(680px, calc(100vw - 32px));
+}
+
+.share-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.share-dialog__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-dialog__heading {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.share-dialog__empty {
+  padding: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.share-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.share-item__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.share-item__expires {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.share-item__revoke {
+  background: none;
+  border: 1px solid rgba(252, 165, 165, 0.25);
+  color: rgba(252, 165, 165, 0.85);
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.share-item__revoke:hover:not(:disabled) {
+  background: rgba(252, 165, 165, 0.12);
+  color: rgba(252, 165, 165, 1);
+}
+
+.share-item__revoke:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.share-item__url-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-item__url {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.share-item__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease;
+}
+
+.share-item__copy:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.share-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+
+.share-badge--read {
+  background: rgba(125, 211, 252, 0.12);
+  color: #7dd3fc;
+  border-color: rgba(125, 211, 252, 0.3);
+}
+
+.share-badge--edit {
+  background: rgba(167, 139, 250, 0.12);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.share-radio-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.share-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.share-radio:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.share-radio--checked {
+  border-color: rgba(167, 139, 250, 0.4);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.share-radio input[type="radio"] {
+  margin-top: 3px;
+  accent-color: #a78bfa;
+}
+
+.share-radio__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-radio__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.share-radio__desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.share-ttl-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.share-ttl-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.share-ttl-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.share-ttl-btn--active {
+  border-color: rgba(167, 139, 250, 0.4);
+  background: rgba(167, 139, 250, 0.1);
+  color: var(--text-primary);
+}
+
+@media (max-width: 560px) {
+  .share-dialog {
+    min-width: 0;
+  }
+  .share-radio-row {
+    grid-template-columns: 1fr;
+  }
+}

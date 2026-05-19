@@ -5,6 +5,7 @@ import {
   Folder as FolderIcon,
   MoreHorizontal,
   Pencil,
+  Share2,
   Trash2,
   FolderInput,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { useConfirm } from "../../components/ui/ConfirmDialog";
 import { useDeleteFolder, useUpdateFolder, type Folder } from "./useFolders";
 import { buildFolderTree, type FolderNode } from "./folder-tree";
 import { MoveDialog } from "./MoveDialog";
+import { ShareFolderDialog } from "./ShareFolderDialog";
 import { cn } from "../../lib/cn";
 import "./files.css";
 
@@ -63,6 +65,7 @@ function FolderNodeRow({ node, level, currentFolderId, onNavigate }: FolderNodeR
   const [expanded, setExpanded] = useState(true);
   const [renameOpen, setRenameOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [renameValue, setRenameValue] = useState(node.name);
   const confirm = useConfirm();
 
@@ -121,6 +124,11 @@ function FolderNodeRow({ node, level, currentFolderId, onNavigate }: FolderNodeR
             icon={<FolderInput size={12} />}
             label="Verschieben"
             onClick={() => setMoveOpen(true)}
+          />
+          <DropdownItem
+            icon={<Share2 size={12} />}
+            label="Freigeben"
+            onClick={() => setShareOpen(true)}
           />
           <DropdownItem
             icon={<Trash2 size={12} />}
@@ -193,6 +201,13 @@ function FolderNodeRow({ node, level, currentFolderId, onNavigate }: FolderNodeR
         onConfirm={async (targetId) => {
           await update.mutateAsync({ parent_id: targetId });
         }}
+      />
+
+      <ShareFolderDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        folderId={node.id}
+        folderName={node.name}
       />
     </div>
   );

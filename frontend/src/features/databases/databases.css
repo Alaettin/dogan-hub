@@ -82,30 +82,8 @@
   color: var(--text-primary);
 }
 
-.db-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.db-form__row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.db-form__label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.db-form__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 6px;
-}
+/* .db-form, .db-form__row, .db-form__label, .db-form__actions →
+   verschoben nach components/ui/glass.css (Dialog-Pattern global verfügbar) */
 
 .template-grid {
   display: grid;

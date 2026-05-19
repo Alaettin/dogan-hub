@@ -32,6 +32,9 @@ const UserDetailPage = lazy(() =>
     default: m.UserDetailPage,
   })),
 );
+const SharePage = lazy(() =>
+  import("./features/share/SharePage").then((m) => ({ default: m.SharePage })),
+);
 
 function PageFallback() {
   return (
@@ -51,6 +54,14 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/share/:token",
+    element: (
+      <Suspense fallback={<PageFallback />}>
+        <SharePage />
+      </Suspense>
+    ),
   },
   {
     element: <ProtectedRoute />,

@@ -1,0 +1,227 @@
+.share-page {
+  min-height: 100vh;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.share-page--centered {
+  justify-content: center;
+  align-items: center;
+}
+
+.share-page__center {
+  padding: 32px;
+  max-width: 420px;
+  text-align: center;
+}
+
+.share-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+}
+
+.share-page__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.share-page__brand-mark {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+
+.share-page__brand-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.share-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.share-page__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+}
+
+.share-page__expires {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.share-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.share-breadcrumb__segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.share-breadcrumb__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.share-breadcrumb__btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.share-breadcrumb__btn:disabled {
+  color: var(--text-primary);
+  cursor: default;
+}
+
+.share-breadcrumb__sep {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.share-page__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.share-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.share-action-btn:hover {
+  background: rgba(167, 139, 250, 0.2);
+}
+
+.share-error {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(252, 165, 165, 0.08);
+  border: 1px solid rgba(252, 165, 165, 0.25);
+  color: var(--text-danger, #fca5a5);
+  font-size: 13px;
+}
+
+.share-list {
+  padding: 8px;
+}
+
+.share-list__empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background 0.12s ease;
+}
+
+.share-row[role="button"] {
+  cursor: pointer;
+}
+
+.share-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.share-row__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-row__meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.share-row__action {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 5px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.share-row__action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.share-row__action--danger {
+  color: rgba(252, 165, 165, 0.85);
+  border-color: rgba(252, 165, 165, 0.25);
+}
+
+.share-row__action--danger:hover {
+  background: rgba(252, 165, 165, 0.12);
+  color: rgba(252, 165, 165, 1);
+}
+
+@media (max-width: 640px) {
+  .share-page {
+    padding: 20px 14px;
+  }
+
+  .share-page__expires {
+    margin-left: 0;
+    width: 100%;
+  }
+}

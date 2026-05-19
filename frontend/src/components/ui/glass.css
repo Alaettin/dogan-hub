@@ -221,3 +221,33 @@
     animation: none;
   }
 }
+
+/* ── Form-Layout in Dialogen ────────────────────────────────
+   Wird in vielen Dialog-Variants verwendet (CreateFolder, Confirm,
+   Move, Settings, Share, Sub-Folder in der Public-Share-Page, …).
+   Lebt hier neben glass-dialog, damit es auf jeder Page mit
+   GlassDialog automatisch verfügbar ist (auch auf /share/:token). */
+.db-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.db-form__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.db-form__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.db-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
