@@ -5,6 +5,7 @@ import { FieldInput } from "./fields/FieldInput";
 import { parseRawValue } from "./fields/value-utils";
 import { getDefaultValue, type FieldDef } from "./fields/field-types";
 import { useCreateEntry, useUpdateEntry, type Entry } from "./useEntries";
+import { EntryAttachments } from "../entry-files/EntryAttachments";
 
 interface EntryFormDialogProps {
   open: boolean;
@@ -111,6 +112,8 @@ export function EntryFormDialog({
             />
           ))
         )}
+
+        {mode === "edit" && entry && <EntryAttachments entryId={entry.id} />}
       </div>
 
       {error && (
