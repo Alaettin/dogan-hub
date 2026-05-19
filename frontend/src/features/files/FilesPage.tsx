@@ -4,13 +4,14 @@ import { LayoutGrid, List, Plus, UploadCloud } from "lucide-react";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useFolders } from "./useFolders";
-import { useFiles } from "./useFiles";
+import { useFiles, type FileRow } from "./useFiles";
 import { FolderTree } from "./FolderTree";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FileList } from "./FileList";
 import { FileGrid } from "./FileGrid";
 import { UploadDropZone } from "./UploadDropZone";
 import { CreateFolderDialog } from "./CreateFolderDialog";
+import { FilePreviewDialog } from "./FilePreviewDialog";
 import { cn } from "../../lib/cn";
 import "./files.css";
 
@@ -21,6 +22,7 @@ export function FilesPage() {
   const currentFolderId = searchParams.get("folder");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [createOpen, setCreateOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<FileRow | null>(null);
 
   const folders = useFolders();
   const files = useFiles(currentFolderId);
@@ -65,22 +67,30 @@ export function FilesPage() {
             onNavigate={navigate}
           />
           <div className="files-toolbar__spacer" />
-          <div className="view-switcher" role="tablist" aria-label="Ansicht">
+          <div className="view-switcher view-switcher--icons" role="tablist" aria-label="Ansicht">
             <button
               type="button"
-              className={cn("view-switcher__btn", viewMode === "list" && "view-switcher__btn--active")}
+              className={cn(
+                "view-switcher__btn",
+                viewMode === "list" && "view-switcher__btn--active",
+              )}
               onClick={() => setViewMode("list")}
               aria-selected={viewMode === "list"}
+              aria-label="Listenansicht"
             >
-              <List size={14} />
+              <List size={16} />
             </button>
             <button
               type="button"
-              className={cn("view-switcher__btn", viewMode === "grid" && "view-switcher__btn--active")}
+              className={cn(
+                "view-switcher__btn",
+                viewMode === "grid" && "view-switcher__btn--active",
+              )}
               onClick={() => setViewMode("grid")}
               aria-selected={viewMode === "grid"}
+              aria-label="Kachelansicht"
             >
-              <LayoutGrid size={14} />
+              <LayoutGrid size={16} />
             </button>
           </div>
           <GlassButton variant="secondary" onClick={() => setCreateOpen(true)}>
@@ -98,10 +108,10 @@ export function FilesPage() {
             {files.isLoading ? (
               <div className="file-list__empty">Lade…</div>
             ) : viewMode === "list" ? (
-              <FileList files={files.data?.items ?? []} />
+              <FileList files={files.data?.items ?? []} onOpen={setPreviewFile} />
             ) : (
               <div style={{ padding: 14 }}>
-                <FileGrid files={files.data?.items ?? []} />
+                <FileGrid files={files.data?.items ?? []} onOpen={setPreviewFile} />
               </div>
             )}
           </GlassPanel>
@@ -112,6 +122,12 @@ export function FilesPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         parentId={currentFolderId}
+      />
+
+      <FilePreviewDialog
+        open={!!previewFile}
+        onOpenChange={(open) => !open && setPreviewFile(null)}
+        file={previewFile}
       />
     </div>
   );

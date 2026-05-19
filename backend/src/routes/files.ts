@@ -244,8 +244,153 @@ filesRouter.delete("/:id", requireAuth, async (req, res, next) => {
   }
 });
 
-// Hilfs-Endpoint nur intern genutzt: hard-delete für storage-cleanup.
-// Frontend nutzt das nicht direkt — Restore-/Hard-Delete-UI kommt in 3c.2.
+// ─── GET /api/files/trash ────────────────────────────────────────────
+filesRouter.get("/trash", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const client = getUserScopedClient(req.user.accessToken);
+
+    const { data, error, count } = await client
+      .from("files")
+      .select(
+        "id, owner_id, folder_id, name, storage_path, mime_type, size_bytes, deleted_at, created_at, updated_at",
+        { count: "exact" },
+      )
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false });
+    if (error) throw errors.internal("Failed to load trash");
+
+    res.json({ items: data ?? [], total: count ?? 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/files/:id/restore ─────────────────────────────────────
+filesRouter.post("/:id/restore", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const client = getUserScopedClient(req.user.accessToken);
+
+    const { data: file } = await client
+      .from("files")
+      .select("id, name")
+      .eq("id", req.params.id)
+      .not("deleted_at", "is", null)
+      .maybeSingle();
+    if (!file) throw errors.notFound("File not found in trash");
+
+    const { data, error } = await client
+      .from("files")
+      .update({ deleted_at: null })
+      .eq("id", req.params.id)
+      .select()
+      .maybeSingle();
+    if (error || !data) throw errors.internal("Restore failed");
+
+    await recordEvent({
+      user_id: req.user.id,
+      action: "update",
+      resource_type: "file",
+      resource_id: data.id,
+      metadata: { name: file.name, restored: true },
+      ip: req.ip,
+    });
+
+    res.json({ file: data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── DELETE /api/files/:id/purge ─────────────────────────────────────
+// Hard-Delete: Storage-Object + DB-Row weg. Nur möglich wenn File in Trash.
+filesRouter.delete("/:id/purge", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const client = getUserScopedClient(req.user.accessToken);
+
+    const { data: file } = await client
+      .from("files")
+      .select("id, name, storage_path, deleted_at")
+      .eq("id", req.params.id)
+      .maybeSingle();
+    if (!file) throw errors.notFound("File not found");
+    if (!file.deleted_at) {
+      throw errors.badRequest("File ist nicht im Papierkorb — erst löschen, dann purgen");
+    }
+
+    // Storage-Object zuerst löschen (wenn das fehlschlägt, lieber orphan als DB-Inkonsistenz)
+    if (file.storage_path) {
+      try {
+        await deleteObjects([file.storage_path]);
+      } catch {
+        // bewusst weiter: Storage-Cleanup-Cron räumt sonst auf
+      }
+    }
+
+    const { error } = await client.from("files").delete().eq("id", req.params.id);
+    if (error) throw errors.internal("Purge failed");
+
+    await recordEvent({
+      user_id: req.user.id,
+      action: "delete",
+      resource_type: "file",
+      resource_id: file.id,
+      metadata: { name: file.name, purged: true },
+      ip: req.ip,
+    });
+
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/files/trash/empty ─────────────────────────────────────
+filesRouter.post("/trash/empty", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const client = getUserScopedClient(req.user.accessToken);
+
+    const { data: trashed } = await client
+      .from("files")
+      .select("id, storage_path")
+      .not("deleted_at", "is", null);
+
+    const paths = (trashed ?? []).map((f) => f.storage_path).filter(Boolean);
+    if (paths.length > 0) {
+      try {
+        await deleteObjects(paths);
+      } catch {
+        // weitermachen
+      }
+    }
+
+    const ids = (trashed ?? []).map((f) => f.id);
+    if (ids.length === 0) {
+      res.json({ purged: 0 });
+      return;
+    }
+
+    const { error } = await client.from("files").delete().in("id", ids);
+    if (error) throw errors.internal("Empty trash failed");
+
+    await recordEvent({
+      user_id: req.user.id,
+      action: "delete",
+      resource_type: "file",
+      metadata: { purged_count: ids.length, empty_trash: true },
+      ip: req.ip,
+    });
+
+    res.json({ purged: ids.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Hilfs-Endpoint nur intern genutzt — z.B. von Storage-Cleanup-Cron in Phase 2.
 export async function purgeFileHard(fileId: string, ownerId: string): Promise<void> {
   const { data: file } = await supabaseService
     .from("files")

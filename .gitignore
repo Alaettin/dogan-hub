@@ -39,3 +39,7 @@ Thumbs.db
 coverage/
 .nyc_output/
 *.log
+
+# ───────── User-Screenshots / Drafts ─────────
+image*.png
+screenshot*.png

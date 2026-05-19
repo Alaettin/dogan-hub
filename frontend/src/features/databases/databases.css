@@ -158,7 +158,13 @@
 .db-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 16px;
+}
+/* Direct anchor-wrapper soll Grid-Zelle voll ausfüllen, damit Karten gleich hoch werden */
+.db-list-grid > a {
+  display: block;
+  height: 100%;
 }
 
 .db-list-card {
@@ -169,6 +175,9 @@
   cursor: pointer;
   text-decoration: none;
   color: inherit;
+  min-height: 140px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .db-list-card__head {

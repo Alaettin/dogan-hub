@@ -35,8 +35,43 @@ dashboardRouter.get("/stats", requireAuth, async (req, res, next) => {
       .select("id", { count: "exact", head: true })
       .eq("user_id", req.user.id);
 
-    const [{ data: profile, error: pErr }, { data: lastLogin }, { count: auditCount }] =
-      await Promise.all([profilePromise, lastLoginPromise, auditCountPromise]);
+    // Storage: SUM size_bytes + COUNT der nicht-gelöschten Files.
+    // Bei 1000+ Files mehrere ms — MVP-akzeptabel.
+    const filesAggregatePromise = client
+      .from("files")
+      .select("size_bytes")
+      .is("deleted_at", null);
+
+    const databasesCountPromise = client
+      .from("databases")
+      .select("id", { count: "exact", head: true })
+      .eq("archived", false);
+
+    const entriesCountPromise = client
+      .from("entries")
+      .select("id", { count: "exact", head: true });
+
+    const [
+      { data: profile, error: pErr },
+      { data: lastLogin },
+      { count: auditCount },
+      { data: fileSizes },
+      { count: dbCount },
+      { count: entryCount },
+    ] = await Promise.all([
+      profilePromise,
+      lastLoginPromise,
+      auditCountPromise,
+      filesAggregatePromise,
+      databasesCountPromise,
+      entriesCountPromise,
+    ]);
+
+    const storageUsed = (fileSizes ?? []).reduce(
+      (sum, row) => sum + (Number(row.size_bytes) || 0),
+      0,
+    );
+    const filesCount = fileSizes?.length ?? 0;
 
     if (pErr || !profile) throw errors.notFound("Profile not found");
 
@@ -55,15 +90,15 @@ dashboardRouter.get("/stats", requireAuth, async (req, res, next) => {
         shopping: { status: "coming_soon", eta: "Etappe 6" },
       },
       storage: {
-        used_bytes: 0,
+        used_bytes: storageUsed,
         limit_bytes: STORAGE_LIMIT_BYTES,
-        items: 0,
+        items: filesCount,
       },
       counts: {
         audit_entries: auditCount ?? 0,
-        databases: 0,
-        entries: 0,
-        files: 0,
+        databases: dbCount ?? 0,
+        entries: entryCount ?? 0,
+        files: filesCount,
       },
     });
   } catch (err) {

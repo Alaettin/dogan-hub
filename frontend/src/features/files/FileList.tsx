@@ -1,32 +1,22 @@
 import { FileRowMenu } from "./FileRowMenu";
 import { formatFileSize, getFileIcon } from "./file-icons";
-import { useDownloadFile, type FileRow } from "./useFiles";
+import type { FileRow } from "./useFiles";
 import "./files.css";
 
 interface FileListProps {
   files: FileRow[];
+  onOpen: (file: FileRow) => void;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" });
 
-export function FileList({ files }: FileListProps) {
-  const download = useDownloadFile();
-
+export function FileList({ files, onOpen }: FileListProps) {
   if (files.length === 0) {
     return (
       <div className="file-list__empty">
         Noch keine Dateien hier — leg sie per Drag-Drop ab oder klick auf "Upload".
       </div>
     );
-  }
-
-  async function openFile(file: FileRow) {
-    try {
-      const url = await download.mutateAsync(file.id);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      console.error("download failed", err);
-    }
   }
 
   return (
@@ -43,7 +33,7 @@ export function FileList({ files }: FileListProps) {
         {files.map((file) => {
           const Icon = getFileIcon(file.mime_type);
           return (
-            <tr key={file.id} onClick={() => openFile(file)}>
+            <tr key={file.id} onClick={() => onOpen(file)}>
               <td>
                 <div className="file-list__name">
                   <Icon size={16} style={{ color: "var(--text-accent)", flexShrink: 0 }} />

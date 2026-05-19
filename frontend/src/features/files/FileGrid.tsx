@@ -1,31 +1,21 @@
 import { GlassCard } from "../../components/ui/GlassCard";
 import { formatFileSize, getFileIcon } from "./file-icons";
 import { FileRowMenu } from "./FileRowMenu";
-import { useDownloadFile, type FileRow } from "./useFiles";
+import type { FileRow } from "./useFiles";
 import "./files.css";
 
 interface FileGridProps {
   files: FileRow[];
+  onOpen: (file: FileRow) => void;
 }
 
-export function FileGrid({ files }: FileGridProps) {
-  const download = useDownloadFile();
-
+export function FileGrid({ files, onOpen }: FileGridProps) {
   if (files.length === 0) {
     return (
       <div className="file-list__empty">
         Noch keine Dateien hier — leg sie per Drag-Drop ab oder klick auf "Upload".
       </div>
     );
-  }
-
-  async function openFile(file: FileRow) {
-    try {
-      const url = await download.mutateAsync(file.id);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      console.error("download failed", err);
-    }
   }
 
   return (
@@ -36,7 +26,7 @@ export function FileGrid({ files }: FileGridProps) {
           <GlassCard
             key={file.id}
             className="file-tile"
-            onClick={() => openFile(file)}
+            onClick={() => onOpen(file)}
           >
             <div className="file-tile__icon">
               <Icon size={22} />

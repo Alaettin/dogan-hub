@@ -16,6 +16,9 @@ const DatabaseDetailPage = lazy(() =>
 const FilesPage = lazy(() =>
   import("./features/files/FilesPage").then((m) => ({ default: m.FilesPage })),
 );
+const TrashPage = lazy(() =>
+  import("./features/files/TrashPage").then((m) => ({ default: m.TrashPage })),
+);
 
 function PageFallback() {
   return (
@@ -64,6 +67,14 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageFallback />}>
                 <FilesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/dateien/papierkorb",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <TrashPage />
               </Suspense>
             ),
           },
