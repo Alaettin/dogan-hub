@@ -15,9 +15,12 @@ build/
 
 # ───────── Env / Secrets ─────────
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
+
+# ───────── Supabase CLI state ─────────
+supabase/.temp/
+supabase/.branches/
 
 # ───────── Docker / Volumes ─────────
 caddy_data/

@@ -1,0 +1,63 @@
+/*
+ * Glass Design Tokens — Dogan-Hub
+ * Verbindliche CSS-Variablen, niemals Werte direkt in Komponenten hardcoden.
+ * Spec: PLAN.md §7.2
+ */
+
+:root {
+  /* Backgrounds */
+  --bg-base-start: #0a0118;
+  --bg-base-mid: #1e1b4b;
+  --bg-base-end: #2d1b69;
+  --bg-mesh-orb-1: rgba(129, 140, 248, 0.35); /* indigo-400 */
+  --bg-mesh-orb-2: rgba(34, 211, 238, 0.25); /* cyan-400 */
+  --bg-mesh-orb-3: rgba(168, 85, 247, 0.2); /* purple-500 */
+
+  /* Glass Surfaces */
+  --glass-bg-1: rgba(255, 255, 255, 0.04);
+  --glass-bg-2: rgba(255, 255, 255, 0.07);
+  --glass-bg-accent: linear-gradient(
+    135deg,
+    rgba(129, 140, 248, 0.18),
+    rgba(34, 211, 238, 0.1)
+  );
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.18);
+  --glass-border-accent: rgba(129, 140, 248, 0.35);
+  --glass-blur: 24px;
+  --glass-blur-strong: 40px;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --text-accent: #a5b4fc; /* indigo-300 */
+  --text-cyan: #67e8f9;
+  --text-success: #86efac;
+  --text-warning: #fcd34d;
+  --text-danger: #fca5a5;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Typography */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", monospace;
+}
+
+/* Body Background — Base-Gradient + Font + dark color-scheme */
+body {
+  background:
+    linear-gradient(
+      135deg,
+      var(--bg-base-start) 0%,
+      var(--bg-base-mid) 50%,
+      var(--bg-base-end) 100%
+    );
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}

@@ -1,0 +1,63 @@
+.mesh-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mesh-orb {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.9;
+  will-change: transform;
+}
+
+.mesh-orb--1 {
+  background: radial-gradient(circle, var(--bg-mesh-orb-1) 0%, transparent 70%);
+  top: -20vmax;
+  left: -15vmax;
+  animation: mesh-drift-1 75s ease-in-out infinite;
+}
+
+.mesh-orb--2 {
+  background: radial-gradient(circle, var(--bg-mesh-orb-2) 0%, transparent 70%);
+  bottom: -25vmax;
+  right: -20vmax;
+  animation: mesh-drift-2 90s ease-in-out infinite;
+}
+
+.mesh-orb--3 {
+  background: radial-gradient(circle, var(--bg-mesh-orb-3) 0%, transparent 70%);
+  top: 40%;
+  left: 30%;
+  animation: mesh-drift-3 60s ease-in-out infinite;
+}
+
+@keyframes mesh-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(15vmax, 10vmax) scale(1.1); }
+  66% { transform: translate(-8vmax, 18vmax) scale(0.95); }
+}
+
+@keyframes mesh-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-20vmax, -15vmax) scale(1.15); }
+}
+
+@keyframes mesh-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-12vmax, 8vmax) scale(1.05); }
+  75% { transform: translate(10vmax, -12vmax) scale(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-orb--1,
+  .mesh-orb--2,
+  .mesh-orb--3 {
+    animation: none;
+  }
+}
