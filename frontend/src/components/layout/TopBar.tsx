@@ -1,14 +1,27 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import { GlassButton } from "../ui/GlassButton";
 import { useAuth } from "../../features/auth/useAuth";
 import "./layout.css";
 
-export function TopBar() {
+interface TopBarProps {
+  onOpenSearch?: () => void;
+}
+
+export function TopBar({ onOpenSearch }: TopBarProps) {
   const { profile, signOut } = useAuth();
 
   return (
     <header className="app-shell__topbar">
-      <div />
+      <button
+        type="button"
+        className="topbar__search-trigger"
+        onClick={onOpenSearch}
+        aria-label="Globale Suche öffnen"
+      >
+        <Search size={14} />
+        <span>Suchen…</span>
+        <span className="topbar__search-kbd">⌘K</span>
+      </button>
       <div className="topbar__user">
         <span className="topbar__user-name">
           {profile?.display_name ?? "Lädt…"}
