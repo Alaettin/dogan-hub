@@ -13,6 +13,7 @@ import { authRouter } from "./routes/auth.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { databasesRouter, databaseTemplatesRouter } from "./routes/databases.js";
 import { entriesRouter } from "./routes/entries.js";
+import { databaseViewsRouter } from "./routes/database-views.js";
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/dashboard", dashboardRouter);
 app.use("/api/databases", databasesRouter);
 app.use("/api/database-templates", databaseTemplatesRouter);
 app.use("/api", entriesRouter);
+app.use("/api", databaseViewsRouter);
 
 app.use(errorHandler);
 

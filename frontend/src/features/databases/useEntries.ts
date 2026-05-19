@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../../lib/api";
+import type { FilterCondition } from "./view-types";
 
 export interface Entry {
   id: string;
@@ -16,14 +17,34 @@ export interface EntryListResult {
   offset: number;
 }
 
+export interface EntryListParams {
+  limit?: number;
+  offset?: number;
+  sort?: string;
+  order?: "asc" | "desc";
+  filters?: FilterCondition[];
+}
+
 const KEY = "entries";
 
-export function useEntries(databaseId: string | undefined, limit = 50, offset = 0) {
+function buildEntryQuery(params: EntryListParams): string {
+  const sp = new URLSearchParams();
+  sp.set("limit", String(params.limit ?? 50));
+  sp.set("offset", String(params.offset ?? 0));
+  if (params.sort) sp.set("sort", params.sort);
+  if (params.order) sp.set("order", params.order);
+  if (params.filters && params.filters.length > 0) {
+    sp.set("filter", JSON.stringify(params.filters));
+  }
+  return sp.toString();
+}
+
+export function useEntries(databaseId: string | undefined, params: EntryListParams = {}) {
   return useQuery<EntryListResult>({
-    queryKey: [KEY, "list", databaseId, { limit, offset }],
+    queryKey: [KEY, "list", databaseId, params],
     queryFn: () =>
       apiFetch<EntryListResult>(
-        `/databases/${databaseId}/entries?limit=${limit}&offset=${offset}`,
+        `/databases/${databaseId}/entries?${buildEntryQuery(params)}`,
       ),
     enabled: !!databaseId,
     staleTime: 15_000,

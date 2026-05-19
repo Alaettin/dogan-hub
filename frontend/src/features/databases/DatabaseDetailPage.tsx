@@ -1,40 +1,91 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Archive, Plus, Settings2, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Archive, Plus, Settings2 } from "lucide-react";
 import { GlassCard } from "../../components/ui/GlassCard";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useDatabase } from "./useDatabases";
-import { useDeleteEntry, useEntries, type Entry } from "./useEntries";
+import { useEntries, type Entry } from "./useEntries";
+import { useViews, type SavedView } from "./useViews";
 import { getIconComponent } from "./icon-picker";
 import { getColorOption } from "./color-picker";
 import { DatabaseMenu } from "./DatabaseMenu";
 import { SchemaEditor } from "./SchemaEditor";
 import { EntryFormDialog } from "./EntryFormDialog";
-import { FieldDisplay } from "./fields/FieldDisplay";
 import type { FieldDef } from "./fields/field-types";
+import {
+  decodeViewFromParams,
+  encodeViewToParams,
+  type ViewConfig,
+} from "./view-types";
+import { ViewSwitcher } from "./views/ViewSwitcher";
+import { SortMenu } from "./views/SortMenu";
+import { FilterBuilder } from "./views/FilterBuilder";
+import { SavedViewsBar } from "./views/SavedViewsBar";
+import { SaveViewDialog } from "./views/SaveViewDialog";
+import { EntryTable } from "./views/EntryTable";
+import { EntryCards } from "./views/EntryCards";
+import { EntryList } from "./views/EntryList";
 import "./databases.css";
 
 export function DatabaseDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const db = useDatabase(id);
-  const entries = useEntries(id);
+  const views = useViews(id);
+
+  // View-Config aus URL
+  const viewConfig = useMemo<ViewConfig>(
+    () => decodeViewFromParams(searchParams),
+    [searchParams],
+  );
+
+  // Default-View beim ersten Mount laden, wenn URL ohne View-Params
+  const [appliedDefault, setAppliedDefault] = useState(false);
+  useEffect(() => {
+    if (appliedDefault) return;
+    if (!views.data) return;
+    if (searchParams.get("view") || searchParams.get("sort") || searchParams.get("filter")) {
+      setAppliedDefault(true);
+      return;
+    }
+    const def = views.data.find((v) => v.is_default);
+    if (def) {
+      const next: ViewConfig = { view_type: def.view_type, ...def.config };
+      setSearchParams(encodeViewToParams(next), { replace: true });
+    }
+    setAppliedDefault(true);
+  }, [views.data, searchParams, setSearchParams, appliedDefault]);
+
+  function updateView(patch: Partial<ViewConfig>) {
+    const next: ViewConfig = { ...viewConfig, ...patch };
+    setSearchParams(encodeViewToParams(next), { replace: true });
+  }
+
+  function applySavedView(view: SavedView) {
+    const next: ViewConfig = { view_type: view.view_type, ...view.config };
+    setSearchParams(encodeViewToParams(next), { replace: true });
+  }
+
+  const entries = useEntries(id, {
+    sort: viewConfig.sort,
+    order: viewConfig.order,
+    filters: viewConfig.filters,
+  });
 
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [entryOpen, setEntryOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined);
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
 
   if (db.isLoading) {
     return <div style={{ color: "var(--text-muted)", fontSize: 14 }}>Lade…</div>;
   }
-
   if (db.isError || !db.data) {
     return (
       <GlassCard style={{ padding: 24, maxWidth: 600 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 500 }}>Datenbank nicht gefunden</h2>
-        <p style={{ marginTop: 8, color: "var(--text-secondary)", fontSize: 14 }}>
-          Möglicherweise wurde sie gelöscht.
-        </p>
         <Link to="/databases" style={{ textDecoration: "none" }}>
           <GlassButton variant="primary" style={{ marginTop: 14 }}>
             <ArrowLeft size={14} />
@@ -53,8 +104,13 @@ export function DatabaseDetailPage() {
   const visibleSchema = visibleFields.length > 0 ? visibleFields : schema.slice(0, 5);
   const entryList = entries.data?.items ?? [];
 
+  function openEdit(entry: Entry) {
+    setEditingEntry(entry);
+    setEntryOpen(true);
+  }
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 1180 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 1180 }}>
       <div className="db-detail-header">
         <div className="db-detail-title">
           <div className="db-detail-icon" style={{ color: color.swatch }}>
@@ -104,7 +160,7 @@ export function DatabaseDetailPage() {
       {db.data.archived && (
         <GlassCard
           style={{
-            padding: 16,
+            padding: 14,
             display: "flex",
             alignItems: "center",
             gap: 10,
@@ -114,31 +170,82 @@ export function DatabaseDetailPage() {
           }}
         >
           <Archive size={16} />
-          Diese Datenbank ist archiviert. Hol sie über das Menü zurück, wenn du sie nutzen willst.
+          Diese Datenbank ist archiviert.
         </GlassCard>
       )}
 
-      {schema.length === 0 && (
+      {schema.length === 0 ? (
         <GlassCard variant="accent" style={{ padding: 24 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>Definiere erst das Schema</h3>
           <p style={{ marginTop: 8, fontSize: 13, color: "var(--text-secondary)" }}>
             Klicke oben auf "Schema" um Felder hinzuzufügen. Erst dann kannst du Einträge anlegen.
           </p>
         </GlassCard>
-      )}
+      ) : (
+        <>
+          {(views.data?.length ?? 0) > 0 && (
+            <SavedViewsBar
+              views={views.data ?? []}
+              current={viewConfig}
+              databaseId={db.data.id}
+              onSelect={applySavedView}
+              onSave={() => setSaveViewOpen(true)}
+            />
+          )}
 
-      {schema.length > 0 && (
-        <GlassPanel style={{ overflow: "hidden" }}>
-          <EntryQuickTable
-            entries={entryList}
-            visibleFields={visibleSchema}
-            databaseId={db.data.id}
-            onEdit={(entry) => {
-              setEditingEntry(entry);
-              setEntryOpen(true);
-            }}
+          <div className="view-toolbar">
+            <SortMenu
+              schema={schema}
+              sort={viewConfig.sort}
+              order={viewConfig.order}
+              onChange={(sort, order) => updateView({ sort, order })}
+            />
+            <div className="view-toolbar__spacer" />
+            {(views.data?.length ?? 0) === 0 && (
+              <GlassButton variant="ghost" onClick={() => setSaveViewOpen(true)}>
+                Ansicht speichern
+              </GlassButton>
+            )}
+            <ViewSwitcher
+              value={viewConfig.view_type}
+              onChange={(v) => updateView({ view_type: v })}
+            />
+          </div>
+
+          <FilterBuilder
+            schema={schema}
+            filters={viewConfig.filters ?? []}
+            onChange={(filters) => updateView({ filters })}
           />
-        </GlassPanel>
+
+          {viewConfig.view_type === "table" && (
+            <GlassPanel style={{ overflow: "hidden" }}>
+              <EntryTable
+                entries={entryList}
+                visibleFields={visibleSchema}
+                databaseId={db.data.id}
+                sort={viewConfig.sort}
+                order={viewConfig.order}
+                onSortChange={(sort, order) => updateView({ sort, order })}
+                onEdit={openEdit}
+              />
+            </GlassPanel>
+          )}
+          {viewConfig.view_type === "cards" && (
+            <EntryCards
+              entries={entryList}
+              visibleFields={visibleSchema}
+              onEdit={openEdit}
+            />
+          )}
+          {viewConfig.view_type === "list" && (
+            <EntryList
+              entries={entryList}
+              visibleFields={visibleSchema}
+              onEdit={openEdit}
+            />
+          )}
+        </>
       )}
 
       <SchemaEditor open={schemaOpen} onOpenChange={setSchemaOpen} database={db.data} />
@@ -150,82 +257,12 @@ export function DatabaseDetailPage() {
         mode={editingEntry ? "edit" : "create"}
         entry={editingEntry}
       />
+      <SaveViewDialog
+        open={saveViewOpen}
+        onOpenChange={setSaveViewOpen}
+        databaseId={db.data.id}
+        config={viewConfig}
+      />
     </div>
-  );
-}
-
-interface EntryQuickTableProps {
-  entries: Entry[];
-  visibleFields: FieldDef[];
-  databaseId: string;
-  onEdit: (entry: Entry) => void;
-}
-
-function EntryQuickTable({ entries, visibleFields, databaseId, onEdit }: EntryQuickTableProps) {
-  if (entries.length === 0) {
-    return (
-      <div className="entry-table__empty">
-        Noch keine Einträge. Klick oben auf "Neuer Eintrag".
-      </div>
-    );
-  }
-
-  return (
-    <table className="entry-table">
-      <thead>
-        <tr>
-          {visibleFields.map((f) => (
-            <th key={f.id}>{f.label}</th>
-          ))}
-          <th className="entry-table__actions" />
-        </tr>
-      </thead>
-      <tbody>
-        {entries.map((e) => (
-          <EntryRow
-            key={e.id}
-            entry={e}
-            visibleFields={visibleFields}
-            databaseId={databaseId}
-            onEdit={() => onEdit(e)}
-          />
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-interface EntryRowProps {
-  entry: Entry;
-  visibleFields: FieldDef[];
-  databaseId: string;
-  onEdit: () => void;
-}
-function EntryRow({ entry, visibleFields, databaseId, onEdit }: EntryRowProps) {
-  const remove = useDeleteEntry(entry.id, databaseId);
-
-  return (
-    <tr onClick={onEdit}>
-      {visibleFields.map((f) => (
-        <td key={f.id}>
-          <FieldDisplay field={f} value={entry.data[f.key]} />
-        </td>
-      ))}
-      <td className="entry-table__actions" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className="glass-button glass-button--ghost"
-          aria-label="Eintrag löschen"
-          onClick={async () => {
-            if (confirm("Eintrag wirklich löschen?")) {
-              await remove.mutateAsync();
-            }
-          }}
-          style={{ color: "var(--text-danger)", padding: "6px 8px" }}
-        >
-          <Trash2 size={14} />
-        </button>
-      </td>
-    </tr>
   );
 }

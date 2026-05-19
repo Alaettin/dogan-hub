@@ -8,6 +8,7 @@ import {
   listEntriesQuerySchema,
   updateEntrySchema,
 } from "../schemas/entry.schema.js";
+import { applyFilter } from "../lib/filter-ops.js";
 
 export const entriesRouter = Router();
 
@@ -18,16 +19,38 @@ entriesRouter.get(
   async (req, res, next) => {
     try {
       if (!req.user) throw errors.unauthorized();
-      const { limit, offset } = listEntriesQuerySchema.parse(req.query);
+      const { limit, offset, sort, order, filter } = listEntriesQuerySchema.parse(req.query);
       const client = getUserScopedClient(req.user.accessToken);
 
-      const { data, error, count } = await client
+      let query = client
         .from("entries")
         .select("id, database_id, data, created_at, updated_at", { count: "exact" })
-        .eq("database_id", req.params.databaseId)
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
-      if (error) throw errors.internal("Failed to load entries");
+        .eq("database_id", req.params.databaseId);
+
+      // Filter-Bedingungen anwenden (chained AND)
+      if (filter) {
+        for (const cond of filter) {
+          query = applyFilter(query, cond);
+        }
+      }
+
+      // Sort: created_at|updated_at direkt, sonst über data->>field (text-sort)
+      const sortColumn =
+        sort === "created_at" || sort === "updated_at"
+          ? sort
+          : sort
+            ? `data->>${sort}`
+            : "created_at";
+      const ascending = order === "asc";
+      query = query.order(sortColumn, { ascending });
+
+      // Tie-Breaker, damit identische Sort-Werte deterministisch zurückkommen
+      if (sortColumn !== "created_at") {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error, count } = await query.range(offset, offset + limit - 1);
+      if (error) throw errors.internal(`Failed to load entries: ${error.message}`);
 
       res.json({ items: data ?? [], total: count ?? 0, limit, offset });
     } catch (err) {
