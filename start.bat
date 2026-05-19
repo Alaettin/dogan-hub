@@ -23,13 +23,15 @@ if not exist "frontend\node_modules" (
 )
 
 echo.
-echo Starte Backend  -> http://localhost:4000
-echo Starte Frontend -> http://localhost:5173
+echo Starte Backend  -^> http://localhost:4000
+echo Starte Frontend -^> http://localhost:5173
 echo.
 echo Tipp: Beide Fenster mit Strg+C beenden.
 echo.
 
-start "Dogan-Hub Backend"  cmd /k "cd /d %~dp0backend  && npm run dev"
-start "Dogan-Hub Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
+REM /D setzt das Working-Directory ohne cd zu brauchen.
+REM cmd /k haelt das Fenster offen, auch wenn npm crasht.
+start "Dogan-Hub Backend"  /D "%~dp0backend"  cmd /k npm run dev
+start "Dogan-Hub Frontend" /D "%~dp0frontend" cmd /k npm run dev
 
 endlocal

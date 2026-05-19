@@ -11,6 +11,7 @@ import { globalLimiter } from "./middleware/rate-limit.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./routes/auth.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { databasesRouter, databaseTemplatesRouter } from "./routes/databases.js";
 
 const app = express();
 
@@ -31,6 +32,8 @@ app.use(globalLimiter);
 app.use("/api/health", healthRouter);
 app.use("/api", authRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/databases", databasesRouter);
+app.use("/api/database-templates", databaseTemplatesRouter);
 
 app.use(errorHandler);
 
