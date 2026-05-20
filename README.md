@@ -2,13 +2,13 @@
 
 > Persönliches Operationssystem als modulare Web-App.
 
-Siehe **[PLAN.md](./PLAN.md)** für die vollständige Architektur, Roadmap und Design-Entscheidungen.
+Siehe **[PLAN.md](./PLAN.md)** für die ursprüngliche Architektur- und Design-Spec (Entwicklungs-Historie).
 
 ## Status
 
-**MVP code-seitig live — Etappe 1 bis 5 fertig.** Auth, Dashboard mit Activity-Feed, Datenbanken-Modul (Schema-Editor + Tabellen-/Karten-/Listen-Views), Dateien-Browser mit Ordnerstruktur und Papierkorb, Eintrag-Anhänge, globale Suche (⌘K), Benutzerverwaltung (Invite/Rolle/Email/Löschen) und Production-Hardening (CSP, Magic-Bytes-Verifikation, Pino-Redact, Log-Rotation, RLS-Test-Suite, DR-Runbook) stehen.
+**Version 1.0 — feature-complete.** Auth, Dashboard mit Activity-Feed, Datenbanken-Modul (Schema-Editor + Tabellen-/Karten-/Listen-Views), Dateien-Browser mit Ordnerstruktur und Papierkorb, Eintrag-Anhänge, globale Suche (⌘K), Benutzerverwaltung (Invite/Rolle/Email/Löschen), **Ordner-Freigabe per Link (read/edit, TTL ≤ 7 Tage)** und Production-Hardening (CSP, Magic-Bytes-Verifikation, Pino-Redact, Log-Rotation, RLS-Test-Suite, DR-Runbook).
 
-Offen für Go-Live: VPS provisionieren, Domain pointen, Supabase Pro aktivieren (für PITR), Auth-Mail-Templates ins Deutsche übersetzen. Etappe 6 (Einkaufsliste) noch nicht begonnen.
+Für Go-Live noch infrastrukturseitig nötig: VPS provisionieren, Domain pointen, Supabase Pro aktivieren (für PITR), Auth-Mail-Templates ins Deutsche übersetzen.
 
 ## Tech-Stack (Kurzfassung)
 
@@ -75,7 +75,9 @@ myhub/
 │   │                                  #   Views (table/cards/list), Filter,
 │   │                                  #   Sort, Bulk-Delete, Field-Typen
 │   ├── src/features/files/            # Browser, Grid/List, Preview-Dialog,
-│   │                                  #   Folder-Tree, Trash, Storage-Quota
+│   │                                  #   Folder-Tree, Trash, Storage-Quota,
+│   │                                  #   Freigabe-Dialog
+│   ├── src/features/share/            # Public Share-Page (/share/:token)
 │   ├── src/features/entry-files/      # Anhänge: FilePicker + Attachments-Chips
 │   ├── src/features/search/           # ⌘K Command Palette (lazy)
 │   ├── src/features/settings/         # Benutzerverwaltung (Liste + Detail)
@@ -89,14 +91,17 @@ myhub/
 │   ├── src/routes/                    # health (/live, /ready, /deep), auth,
 │   │                                  #   dashboard, databases, entries,
 │   │                                  #   database-views, folders, files,
-│   │                                  #   entry-files, search, admin
+│   │                                  #   entry-files, search, admin,
+│   │                                  #   shares (Owner), public (Token)
 │   ├── src/services/                  # storage, file (Magic-Bytes),
-│   │                                  #   audit (Append-Only-Log)
+│   │                                  #   audit (Append-Only-Log),
+│   │                                  #   share (Token/Subtree), folder
+│   │                                  #   (Tree-Soft-Delete)
 │   ├── src/schemas/                   # Zod Request-Validation pro Domain
 │   └── tests/rls/                     # 21 RLS-Cross-User-Tests
 ├── supabase/
 │   ├── config.toml
-│   └── migrations/                    # 0001 profiles → 0008 storage
+│   └── migrations/                    # 0001 profiles → 0009 folder_shares
 ├── docs/
 │   ├── SUPABASE_SETUP.md              # Einmal-Setup-Anleitung
 │   ├── AUTH_FLOW.md                   # Wie JWT + RLS zusammenspielen
@@ -130,18 +135,8 @@ myhub/
 | POST/DELETE | `/api/entries/:id/files[/:fid]` | Eintrag↔Datei-Verknüpfung | Bearer JWT |
 | GET | `/api/search?q=…` | Globale Suche (databases/entries/folders/files) | Bearer JWT |
 | GET/POST/PATCH/DELETE | `/api/admin/users[/:id[/invite]]` | User-Management | Admin-JWT |
-
-## Roadmap
-
-Vollständig in [PLAN.md §8](./PLAN.md). Kurz:
-
-- ✅ **Etappe 0** — Setup (Boilerplate)
-- ✅ **Etappe 1** — Auth & Shell (Supabase, Login, Glass-Design)
-- ✅ **Etappe 2** — Dashboard mit Live-Stats
-- ✅ **Etappe 3** — Daten-Modul (Datenbanken + Dateien + globale Suche)
-- ✅ **Etappe 4** — Admin (Benutzerverwaltung + User-Detail-Seite)
-- 🟡 **Etappe 5** — Production-Hardening (Code: ✅ — Infra: VPS/DNS/Mail noch offen)
-- ⬜ **Etappe 6** — Einkaufsliste
+| GET/POST/DELETE | `/api/folders/:id/shares` + `/folders/shares/:sid` | Freigaben verwalten (Owner) | Bearer JWT |
+| GET/POST/PATCH/DELETE | `/api/public/shares/:token/*` | Public Folder-Zugriff (read/edit) | Token |
 
 ## Owner
 
