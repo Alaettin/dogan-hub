@@ -6,7 +6,7 @@ Siehe **[PLAN.md](./PLAN.md)** für die ursprüngliche Architektur- und Design-S
 
 ## Status
 
-**Version 1.0 — feature-complete.** Auth, Dashboard mit Activity-Feed, Datenbanken-Modul (Schema-Editor + Tabellen-/Karten-/Listen-Views), Dateien-Browser mit Ordnerstruktur und Papierkorb, Eintrag-Anhänge, globale Suche (⌘K), Benutzerverwaltung (Invite/Rolle/Email/Löschen), **Ordner-Freigabe per Link (read/edit, TTL ≤ 7 Tage)** und Production-Hardening (CSP, Magic-Bytes-Verifikation, Pino-Redact, Log-Rotation, RLS-Test-Suite, DR-Runbook).
+**Version 1.1 — feature-complete.** Auth, Dashboard mit Activity-Feed + Kalender-Widget, Datenbanken-Modul (Schema-Editor + Tabellen-/Karten-/Listen-Views), Dateien-Browser mit Ordnerstruktur und Papierkorb, Eintrag-Anhänge, globale Suche (⌘K), Benutzerverwaltung (Invite/Rolle/Email/Löschen), **Ordner-Freigabe per Link (read/edit, TTL ≤ 7 Tage)**, **Kalender (Jahr/Monat/Woche, bundesweite Feiertage, wiederkehrende Termine inkl. Geburtstage, In-App-Erinnerungen)** und Production-Hardening (CSP, Magic-Bytes-Verifikation, Pino-Redact, Log-Rotation, RLS-Test-Suite, DR-Runbook).
 
 Für Go-Live noch infrastrukturseitig nötig: VPS provisionieren, Domain pointen, Supabase Pro aktivieren (für PITR), Auth-Mail-Templates ins Deutsche übersetzen.
 
@@ -70,7 +70,7 @@ myhub/
 │   │                                  #   ConfirmDialog (Portal-basiert)
 │   ├── src/components/layout/         # AppShell, Sidebar, TopBar
 │   ├── src/features/auth/             # useAuth, LoginPage, ProtectedRoute
-│   ├── src/features/dashboard/        # Stats + Activity-Feed
+│   ├── src/features/dashboard/        # Stats + Activity-Feed + Kalender-Widget
 │   ├── src/features/databases/        # Liste, Detail, Schema-Editor,
 │   │                                  #   Views (table/cards/list), Filter,
 │   │                                  #   Sort, Bulk-Delete, Field-Typen
@@ -78,10 +78,13 @@ myhub/
 │   │                                  #   Folder-Tree, Trash, Storage-Quota,
 │   │                                  #   Freigabe-Dialog
 │   ├── src/features/share/            # Public Share-Page (/share/:token)
+│   ├── src/features/calendar/         # Kalender: Jahr/Monat/Woche, EventDialog,
+│   │                                  #   Tages-Dialog, Widget, In-App-Reminder
 │   ├── src/features/entry-files/      # Anhänge: FilePicker + Attachments-Chips
 │   ├── src/features/search/           # ⌘K Command Palette (lazy)
 │   ├── src/features/settings/         # Benutzerverwaltung (Liste + Detail)
-│   ├── src/lib/                       # supabase, api, query-client, cn
+│   ├── src/lib/                       # supabase, api, query-client, cn,
+│   │                                  #   calendar-utils, holidays, recurrence
 │   └── src/router.tsx                 # Lazy-loaded Routes
 ├── backend/                           # Node + Express + TS
 │   ├── src/config/                    # env (Zod), supabase clients
@@ -92,7 +95,7 @@ myhub/
 │   │                                  #   dashboard, databases, entries,
 │   │                                  #   database-views, folders, files,
 │   │                                  #   entry-files, search, admin,
-│   │                                  #   shares (Owner), public (Token)
+│   │                                  #   shares (Owner), public (Token), calendar
 │   ├── src/services/                  # storage, file (Magic-Bytes),
 │   │                                  #   audit (Append-Only-Log),
 │   │                                  #   share (Token/Subtree), folder
@@ -101,7 +104,7 @@ myhub/
 │   └── tests/rls/                     # 21 RLS-Cross-User-Tests
 ├── supabase/
 │   ├── config.toml
-│   └── migrations/                    # 0001 profiles → 0009 folder_shares
+│   └── migrations/                    # 0001 profiles → 0010 calendar_events
 ├── docs/
 │   ├── SUPABASE_SETUP.md              # Einmal-Setup-Anleitung
 │   ├── AUTH_FLOW.md                   # Wie JWT + RLS zusammenspielen
@@ -137,6 +140,7 @@ myhub/
 | GET/POST/PATCH/DELETE | `/api/admin/users[/:id[/invite]]` | User-Management | Admin-JWT |
 | GET/POST/DELETE | `/api/folders/:id/shares` + `/folders/shares/:sid` | Freigaben verwalten (Owner) | Bearer JWT |
 | GET/POST/PATCH/DELETE | `/api/public/shares/:token/*` | Public Folder-Zugriff (read/edit) | Token |
+| GET/POST/PATCH/DELETE | `/api/calendar/events[/:id]` | Kalender-Termine (Range-Query, Recurrence) | Bearer JWT |
 
 ## Owner
 
