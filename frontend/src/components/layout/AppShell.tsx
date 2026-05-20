@@ -12,6 +12,13 @@ const CommandPalette = lazy(() =>
   })),
 );
 
+// In-App-Erinnerungen lazy — hält den Kalender-Code aus dem Main-Bundle.
+const ReminderBanner = lazy(() =>
+  import("../../features/calendar/ReminderBanner").then((m) => ({
+    default: m.ReminderBanner,
+  })),
+);
+
 export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
@@ -46,6 +53,9 @@ export function AppShell() {
           <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </Suspense>
       )}
+      <Suspense fallback={null}>
+        <ReminderBanner />
+      </Suspense>
     </>
   );
 }

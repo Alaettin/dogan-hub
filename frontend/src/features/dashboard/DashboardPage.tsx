@@ -1,8 +1,14 @@
+import { lazy, Suspense } from "react";
 import { useAuth } from "../auth/useAuth";
 import { StatsRow } from "./StatsRow";
 import { ActivityFeed } from "./ActivityFeed";
 import { useDashboardActivity, useDashboardStats } from "./useDashboard";
 import "./dashboard.css";
+
+// Kalender-Widget lazy — hält den Kalender-Code aus dem Main-Bundle.
+const CalendarWidget = lazy(() =>
+  import("../calendar/CalendarWidget").then((m) => ({ default: m.CalendarWidget })),
+);
 
 export function DashboardPage() {
   const { profile } = useAuth();
@@ -18,6 +24,10 @@ export function DashboardPage() {
           Hallo, {displayName}
         </h1>
       </header>
+
+      <Suspense fallback={null}>
+        <CalendarWidget />
+      </Suspense>
 
       <StatsRow stats={stats.data} loading={stats.isLoading} />
 

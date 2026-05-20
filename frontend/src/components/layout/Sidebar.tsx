@@ -6,6 +6,7 @@ import {
   Bird,
   FolderOpen,
   Trash2,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { StorageIndicator } from "../../features/files/StorageIndicator";
@@ -33,6 +34,7 @@ export function Sidebar() {
 
       <nav className="sidebar__nav">
         <SidebarLink to="/" label="Dashboard" icon={<LayoutDashboard size={16} />} />
+        <SidebarLink to="/kalender" label="Kalender" icon={<CalendarDays size={16} />} />
       </nav>
 
       <div className="sidebar__section-label">Daten</div>

@@ -35,6 +35,9 @@ const UserDetailPage = lazy(() =>
 const SharePage = lazy(() =>
   import("./features/share/SharePage").then((m) => ({ default: m.SharePage })),
 );
+const CalendarPage = lazy(() =>
+  import("./features/calendar/CalendarPage").then((m) => ({ default: m.CalendarPage })),
+);
 
 function PageFallback() {
   return (
@@ -70,6 +73,14 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: "/", element: <DashboardPage /> },
+          {
+            path: "/kalender",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <CalendarPage />
+              </Suspense>
+            ),
+          },
           {
             path: "/databases",
             element: (
