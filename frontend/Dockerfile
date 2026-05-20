@@ -2,6 +2,13 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# VITE-Vars müssen zur Build-Zeit vorliegen (werden ins Bundle gebacken).
+# Werden via docker-compose build.args aus der .env durchgereicht.
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 COPY package.json package-lock.json* ./
 RUN npm install --no-audit --no-fund
 

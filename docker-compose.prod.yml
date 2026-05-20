@@ -1,0 +1,43 @@
+# Production-Compose für VMs mit BEREITS LAUFENDEM Caddy.
+# Startet nur frontend + backend und tritt dem bestehenden Caddy-Netzwerk bei.
+# Der vorhandene Caddy routet myhub.adogan.de → diese Container (per Name).
+#
+# Standalone (ohne eigenen Caddy)? → docker-compose.yml verwenden.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Voraussetzung in .env: CADDY_NETWORK, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+# (siehe docs/DEPLOY_VM.md).
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # VITE-Vars werden ins Bundle gebacken (Build-Zeit) — aus .env interpoliert.
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    container_name: myhub-frontend
+    restart: unless-stopped
+    networks: [caddy_net]
+
+  backend:
+    build: ./backend
+    container_name: myhub-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      LOG_FILE_PATH: ${LOG_FILE_PATH:-/app/logs/app.log}
+    volumes:
+      - backend_logs:/app/logs
+    networks: [caddy_net]
+
+volumes:
+  backend_logs:
+
+networks:
+  # Das EXISTIERENDE Caddy-Netzwerk. Name via .env (CADDY_NETWORK) setzen —
+  # ermitteln mit: docker inspect <caddy-container> -f '{{json .NetworkSettings.Networks}}'
+  caddy_net:
+    external: true
+    name: ${CADDY_NETWORK}

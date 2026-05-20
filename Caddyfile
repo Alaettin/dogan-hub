@@ -24,7 +24,9 @@
         -Server
     }
 
-    handle_path /api/* {
+    # handle (nicht handle_path): /api-Präfix NICHT strippen — das Backend
+    # mountet alle Routen unter /api/... (app.use("/api/health", …)).
+    handle /api/* {
         reverse_proxy backend:4000
     }
 
