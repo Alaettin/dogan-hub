@@ -1,13 +1,14 @@
-# Production-Compose für VMs mit BEREITS LAUFENDEM Caddy.
-# Startet nur frontend + backend und tritt dem bestehenden Caddy-Netzwerk bei.
-# Der vorhandene Caddy routet myhub.adogan.de → diese Container (per Name).
+# Production-Compose für VMs mit BEREITS LAUFENDEM Reverse-Proxy (z.B. Host-Caddy).
+# Startet nur frontend + backend und published sie auf 127.0.0.1-Ports.
+# Der vorhandene Proxy routet myhub.adogan.de → diese Ports (analog zu den
+# anderen Apps der VM, die ebenfalls auf 127.0.0.1:<port> liegen).
 #
-# Standalone (ohne eigenen Caddy)? → docker-compose.yml verwenden.
+# Standalone (ohne eigenen Proxy)? → docker-compose.yml (bringt eigenen Caddy mit).
 #
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
-# Voraussetzung in .env: CADDY_NETWORK, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-# (siehe docs/DEPLOY_VM.md).
+# Voraussetzung in .env: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+# (siehe docs/DEPLOY_VM.md). Ports unten ggf. an freie Host-Ports anpassen.
 
 services:
   frontend:
@@ -19,7 +20,8 @@ services:
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
     container_name: myhub-frontend
     restart: unless-stopped
-    networks: [caddy_net]
+    ports:
+      - "127.0.0.1:8090:80"        # Host-Caddy proxyt hierher (statische SPA)
 
   backend:
     build: ./backend
@@ -30,14 +32,8 @@ services:
       LOG_FILE_PATH: ${LOG_FILE_PATH:-/app/logs/app.log}
     volumes:
       - backend_logs:/app/logs
-    networks: [caddy_net]
+    ports:
+      - "127.0.0.1:4000:4000"      # Host-Caddy proxyt /api/* hierher
 
 volumes:
   backend_logs:
-
-networks:
-  # Das EXISTIERENDE Caddy-Netzwerk. Name via .env (CADDY_NETWORK) setzen —
-  # ermitteln mit: docker inspect <caddy-container> -f '{{json .NetworkSettings.Networks}}'
-  caddy_net:
-    external: true
-    name: ${CADDY_NETWORK}
