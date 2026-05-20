@@ -7,6 +7,7 @@ import {
   FolderOpen,
   Trash2,
   CalendarDays,
+  KanbanSquare,
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { StorageIndicator } from "../../features/files/StorageIndicator";
@@ -50,6 +51,16 @@ export function Sidebar() {
           to="/dateien/papierkorb"
           label="Papierkorb"
           icon={<Trash2 size={16} />}
+        />
+      </nav>
+
+      <div className="sidebar__section-label">Applikation</div>
+      <nav className="sidebar__nav">
+        <SidebarLink
+          to="/kanban"
+          label="Kanban"
+          icon={<KanbanSquare size={16} />}
+          end={false}
         />
       </nav>
 

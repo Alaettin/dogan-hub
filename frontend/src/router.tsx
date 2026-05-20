@@ -38,6 +38,12 @@ const SharePage = lazy(() =>
 const CalendarPage = lazy(() =>
   import("./features/calendar/CalendarPage").then((m) => ({ default: m.CalendarPage })),
 );
+const KanbanListPage = lazy(() =>
+  import("./features/kanban/KanbanListPage").then((m) => ({ default: m.KanbanListPage })),
+);
+const KanbanBoardPage = lazy(() =>
+  import("./features/kanban/KanbanBoardPage").then((m) => ({ default: m.KanbanBoardPage })),
+);
 
 function PageFallback() {
   return (
@@ -78,6 +84,22 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageFallback />}>
                 <CalendarPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/kanban",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <KanbanListPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/kanban/:boardId",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <KanbanBoardPage />
               </Suspense>
             ),
           },

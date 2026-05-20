@@ -1,19 +1,20 @@
 import { lazy, Suspense } from "react";
 import { useAuth } from "../auth/useAuth";
 import { StatsRow } from "./StatsRow";
-import { ActivityFeed } from "./ActivityFeed";
-import { useDashboardActivity, useDashboardStats } from "./useDashboard";
+import { useDashboardStats } from "./useDashboard";
 import "./dashboard.css";
 
-// Kalender-Widget lazy — hält den Kalender-Code aus dem Main-Bundle.
+// Widgets lazy — halten Kalender-/Kanban-Code aus dem Main-Bundle.
 const CalendarWidget = lazy(() =>
   import("../calendar/CalendarWidget").then((m) => ({ default: m.CalendarWidget })),
+);
+const KanbanWidget = lazy(() =>
+  import("../kanban/KanbanWidget").then((m) => ({ default: m.KanbanWidget })),
 );
 
 export function DashboardPage() {
   const { profile } = useAuth();
   const stats = useDashboardStats();
-  const activity = useDashboardActivity(10);
 
   const displayName = profile?.display_name ?? stats.data?.user.display_name ?? "Hub-Nutzer";
 
@@ -25,13 +26,15 @@ export function DashboardPage() {
         </h1>
       </header>
 
+      <StatsRow stats={stats.data} loading={stats.isLoading} />
+
       <Suspense fallback={null}>
         <CalendarWidget />
       </Suspense>
 
-      <StatsRow stats={stats.data} loading={stats.isLoading} />
-
-      <ActivityFeed items={activity.data?.items} loading={activity.isLoading} />
+      <Suspense fallback={null}>
+        <KanbanWidget />
+      </Suspense>
     </div>
   );
 }
