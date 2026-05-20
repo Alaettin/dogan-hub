@@ -31,9 +31,6 @@ export function UserManagementPage() {
       <header className="settings-content__header">
         <div>
           <h1 className="settings-content__title">Benutzerverwaltung</h1>
-          <p className="settings-content__subtitle">
-            Klicke einen Eintrag um Details zu bearbeiten oder lade neue Personen ein.
-          </p>
         </div>
         <GlassButton variant="primary" onClick={() => setInviteOpen(true)}>
           <Plus size={14} />

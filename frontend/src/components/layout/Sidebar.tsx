@@ -51,16 +51,18 @@ export function Sidebar() {
         />
       </nav>
 
-      <nav className="sidebar__nav" style={{ marginTop: 16 }}>
-        <SidebarLink
-          to="/einstellungen"
-          label="Einstellungen"
-          icon={<Settings size={16} />}
-          end={false}
-        />
-      </nav>
+      <div className="sidebar__footer">
+        <nav className="sidebar__nav sidebar__nav--footer">
+          <SidebarLink
+            to="/einstellungen"
+            label="Einstellungen"
+            icon={<Settings size={16} />}
+            end={false}
+          />
+        </nav>
 
-      <StorageIndicator />
+        <StorageIndicator />
+      </div>
     </aside>
   );
 }

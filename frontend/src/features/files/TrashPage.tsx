@@ -46,9 +46,6 @@ export function TrashPage() {
           >
             Papierkorb
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-            Gelöschte Dateien können wiederhergestellt oder endgültig entfernt werden.
-          </p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {items.length > 0 && (

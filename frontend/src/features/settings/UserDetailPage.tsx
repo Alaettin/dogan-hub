@@ -57,9 +57,7 @@ export function UserDetailPage() {
 
       <DetailHeader user={user} isSelf={isSelf} />
 
-      <DisplayNameSection user={user} />
-      <RoleSection user={user} isSelf={isSelf} />
-      <EmailSection user={user} />
+      <ProfileSection user={user} isSelf={isSelf} />
       <DangerSection user={user} isSelf={isSelf} />
     </div>
   );
@@ -102,74 +100,36 @@ function DetailHeader({ user, isSelf }: SectionProps) {
   );
 }
 
-function DisplayNameSection({ user }: SectionProps) {
+// Bündelt Anzeigename, Rolle und Email in einer Profil-Karte mit
+// gemeinsamem State und einem einzigen Speichern-Button unten.
+function ProfileSection({ user, isSelf }: SectionProps) {
   const update = useUpdateUser();
-  const [value, setValue] = useState(user.display_name);
+  const [displayName, setDisplayName] = useState(user.display_name);
+  const [role, setRole] = useState<"admin" | "user">(user.role);
+  const [email, setEmail] = useState(user.email ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   // Sync wenn Liste neu geladen wird (z.B. nach Save)
   useEffect(() => {
-    setValue(user.display_name);
-  }, [user.display_name]);
+    setDisplayName(user.display_name);
+    setRole(user.role);
+    setEmail(user.email ?? "");
+  }, [user.display_name, user.role, user.email]);
 
-  const dirty = value.trim() !== user.display_name && value.trim().length > 0;
+  const trimmedName = displayName.trim();
+  const trimmedEmail = email.trim();
+  const nameDirty = trimmedName !== user.display_name && trimmedName.length > 0;
+  const roleDirty = role !== user.role;
+  const emailDirty = trimmedEmail !== (user.email ?? "") && trimmedEmail.length > 0;
+  const dirty = nameDirty || roleDirty || emailDirty;
 
-  async function save() {
-    setError(null);
+  // Self-Demote client-seitig blockieren (Server lehnt zusätzlich ab).
+  const blockedSelfDemote = isSelf && roleDirty && role === "user";
+
+  function touch() {
     setSaved(false);
-    try {
-      await update.mutateAsync({ id: user.id, display_name: value.trim() });
-      setSaved(true);
-    } catch (err) {
-      setError(formatError(err));
-    }
   }
-
-  return (
-    <Section title="Profil" description="Wie diese Person in der Plattform angezeigt wird.">
-      <div className="user-detail-form-row">
-        <GlassInput
-          label="Anzeigename"
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setSaved(false);
-          }}
-          maxLength={80}
-          error={error ?? undefined}
-        />
-        <div className="user-detail-form-row__actions">
-          {saved && !dirty && (
-            <span className="user-detail-form-row__hint">Gespeichert</span>
-          )}
-          <GlassButton
-            variant="primary"
-            onClick={save}
-            disabled={!dirty || update.isPending}
-          >
-            <Save size={14} />
-            {update.isPending ? "Speichere…" : "Speichern"}
-          </GlassButton>
-        </div>
-      </div>
-    </Section>
-  );
-}
-
-function RoleSection({ user, isSelf }: SectionProps) {
-  const update = useUpdateUser();
-  const [value, setValue] = useState<"admin" | "user">(user.role);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setValue(user.role);
-  }, [user.role]);
-
-  const dirty = value !== user.role;
-  // Self-Demote auf der Client-Seite blockieren (Server lehnt zusätzlich ab).
-  const blockedSelfDemote = isSelf && value === "user";
 
   async function save() {
     setError(null);
@@ -178,8 +138,12 @@ function RoleSection({ user, isSelf }: SectionProps) {
       setError("Du kannst dich nicht selbst herabstufen");
       return;
     }
+    const patch: Parameters<typeof update.mutateAsync>[0] = { id: user.id };
+    if (nameDirty) patch.display_name = trimmedName;
+    if (roleDirty) patch.role = role;
+    if (emailDirty) patch.email = trimmedEmail;
     try {
-      await update.mutateAsync({ id: user.id, role: value });
+      await update.mutateAsync(patch);
       setSaved(true);
     } catch (err) {
       setError(formatError(err));
@@ -187,26 +151,57 @@ function RoleSection({ user, isSelf }: SectionProps) {
   }
 
   return (
-    <Section
-      title="Rolle"
-      description="Admins können alle Daten sehen, User nur ihre eigenen."
-    >
-      <div className="user-detail-radio-group" role="radiogroup" aria-label="Rolle">
-        <RoleOption
-          label="User"
-          description="Standardrolle. Sieht eigene Daten."
-          checked={value === "user"}
-          onChange={() => setValue("user")}
-          disabled={update.isPending}
-        />
-        <RoleOption
-          label="Admin"
-          description="Vollzugriff. Kann Benutzer verwalten."
-          checked={value === "admin"}
-          onChange={() => setValue("admin")}
-          disabled={update.isPending}
+    <Section title="Profil">
+      <div className="user-detail-field">
+        <GlassInput
+          label="Anzeigename"
+          value={displayName}
+          onChange={(e) => {
+            setDisplayName(e.target.value);
+            touch();
+          }}
+          maxLength={80}
         />
       </div>
+
+      <div className="user-detail-field">
+        <span className="user-detail-field__label">Rolle</span>
+        <div className="user-detail-radio-group" role="radiogroup" aria-label="Rolle">
+          <RoleOption
+            label="User"
+            description="Standardrolle. Sieht eigene Daten."
+            checked={role === "user"}
+            onChange={() => {
+              setRole("user");
+              touch();
+            }}
+            disabled={update.isPending}
+          />
+          <RoleOption
+            label="Admin"
+            description="Vollzugriff. Kann Benutzer verwalten."
+            checked={role === "admin"}
+            onChange={() => {
+              setRole("admin");
+              touch();
+            }}
+            disabled={update.isPending}
+          />
+        </div>
+      </div>
+
+      <div className="user-detail-field">
+        <GlassInput
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            touch();
+          }}
+        />
+      </div>
+
       {error && <div className="user-detail-form-row__error">{error}</div>}
       <div className="user-detail-form-row__actions">
         {saved && !dirty && (
@@ -251,64 +246,6 @@ function RoleOption({ label, description, checked, onChange, disabled }: RoleOpt
   );
 }
 
-function EmailSection({ user }: SectionProps) {
-  const update = useUpdateUser();
-  const initial = user.email ?? "";
-  const [value, setValue] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setValue(user.email ?? "");
-  }, [user.email]);
-
-  const dirty = value.trim() !== initial && value.trim().length > 0;
-
-  async function save() {
-    setError(null);
-    setSaved(false);
-    try {
-      await update.mutateAsync({ id: user.id, email: value.trim() });
-      setSaved(true);
-    } catch (err) {
-      setError(formatError(err));
-    }
-  }
-
-  return (
-    <Section
-      title="Email"
-      description="Die Email wird sofort aktualisiert. Supabase informiert die alte Adresse, sofern aktiviert."
-    >
-      <div className="user-detail-form-row">
-        <GlassInput
-          label="Email"
-          type="email"
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setSaved(false);
-          }}
-          error={error ?? undefined}
-        />
-        <div className="user-detail-form-row__actions">
-          {saved && !dirty && (
-            <span className="user-detail-form-row__hint">Gespeichert</span>
-          )}
-          <GlassButton
-            variant="primary"
-            onClick={save}
-            disabled={!dirty || update.isPending}
-          >
-            <Save size={14} />
-            {update.isPending ? "Speichere…" : "Speichern"}
-          </GlassButton>
-        </div>
-      </div>
-    </Section>
-  );
-}
-
 function DangerSection({ user, isSelf }: SectionProps) {
   const navigate = useNavigate();
   const deleteUser = useDeleteUser();
@@ -334,11 +271,7 @@ function DangerSection({ user, isSelf }: SectionProps) {
   }
 
   return (
-    <Section
-      title="Gefahrenzone"
-      description="Endgültige Aktionen. Bitte mit Bedacht."
-      variant="danger"
-    >
+    <Section title="Gefahrenzone" variant="danger">
       <div className="user-detail-form-row">
         <div className="user-detail-danger-text">
           Das Konto und alle zugehörigen Daten werden unwiderruflich gelöscht.

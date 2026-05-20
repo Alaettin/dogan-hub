@@ -72,6 +72,19 @@
   gap: 2px;
 }
 
+/* Footer-Block (Einstellungen + Speicheranzeige) ans untere Ende schieben. */
+.sidebar__footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar__nav--footer {
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+}
+
 .sidebar__item {
   display: flex;
   align-items: center;

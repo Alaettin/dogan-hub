@@ -64,11 +64,11 @@ export function DatabaseListPage() {
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 500 }}>
             {showArchived ? "Keine archivierten Datenbanken" : "Noch keine Datenbank"}
           </h2>
-          <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14, maxWidth: 480 }}>
-            {showArchived
-              ? "Wenn du eine Datenbank archivierst, taucht sie hier auf."
-              : "Starte aus einem der vordefinierten Templates (Autos, Verträge, Bücher, …) oder bau dir eine eigene."}
-          </p>
+          {showArchived && (
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14, maxWidth: 480 }}>
+              Wenn du eine Datenbank archivierst, taucht sie hier auf.
+            </p>
+          )}
           {!showArchived && (
             <GlassButton variant="primary" onClick={() => setCreateOpen(true)}>
               <Plus size={14} />

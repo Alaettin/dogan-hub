@@ -364,6 +364,19 @@
   gap: 12px;
 }
 
+/* Einzelnes Feld (Anzeigename / Rolle / Email) innerhalb der Profil-Karte. */
+.user-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-detail-field__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .user-detail-form-row {
   display: flex;
   flex-direction: column;
