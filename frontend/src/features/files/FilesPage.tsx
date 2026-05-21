@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { LayoutGrid, List, Plus, UploadCloud } from "lucide-react";
+import { LayoutGrid, List, Plus, Share2, UploadCloud } from "lucide-react";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useFolders } from "./useFolders";
@@ -11,6 +11,7 @@ import { FileList } from "./FileList";
 import { FileGrid } from "./FileGrid";
 import { UploadDropZone } from "./UploadDropZone";
 import { CreateFolderDialog } from "./CreateFolderDialog";
+import { ShareFolderDialog } from "./ShareFolderDialog";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import { cn } from "../../lib/cn";
 import "./files.css";
@@ -22,10 +23,12 @@ export function FilesPage() {
   const currentFolderId = searchParams.get("folder");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [createOpen, setCreateOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileRow | null>(null);
 
   const folders = useFolders();
   const files = useFiles(currentFolderId);
+  const currentFolder = folders.data?.find((f) => f.id === currentFolderId);
 
   function navigate(folderId: string | null) {
     const next = new URLSearchParams(searchParams);
@@ -95,6 +98,15 @@ export function FilesPage() {
             <Plus size={14} />
             Neuer Ordner
           </GlassButton>
+          <GlassButton
+            variant="secondary"
+            onClick={() => setShareOpen(true)}
+            disabled={!currentFolderId}
+            title={currentFolderId ? "Aktuellen Ordner freigeben" : "Öffne einen Ordner, um ihn freizugeben"}
+          >
+            <Share2 size={14} />
+            Freigeben
+          </GlassButton>
           <GlassButton variant="primary" onClick={triggerUpload}>
             <UploadCloud size={14} />
             Upload
@@ -120,6 +132,13 @@ export function FilesPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         parentId={currentFolderId}
+      />
+
+      <ShareFolderDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        folderId={currentFolderId}
+        folderName={currentFolder?.name ?? null}
       />
 
       <FilePreviewDialog
