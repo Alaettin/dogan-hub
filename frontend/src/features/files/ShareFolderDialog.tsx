@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Eye, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, Eye, Mail, Pencil, Trash2 } from "lucide-react";
 import { GlassDialog } from "../../components/ui/GlassDialog";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
@@ -53,6 +53,17 @@ export function ShareFolderDialog({
     } catch {
       setError("Kopieren in die Zwischenablage fehlgeschlagen");
     }
+  }
+
+  function emailShare(share: FolderShare) {
+    const url = buildShareUrl(share.token);
+    const perm = share.permission === "edit" ? "Bearbeiten" : "Lesen";
+    const subject = `Freigabe: ${folderName ?? "Ordner"}`;
+    const body =
+      `Hallo,\n\nich teile den Ordner „${folderName ?? ""}" mit dir:\n${url}\n\n` +
+      `Zugriff: ${perm}\n${formatRemaining(share.expires_at)}\n`;
+    window.location.href =
+      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   async function submit() {
@@ -145,6 +156,14 @@ export function ShareFolderDialog({
                       <Copy size={12} /> Kopieren
                     </>
                   )}
+                </button>
+                <button
+                  type="button"
+                  className="share-item__copy"
+                  onClick={() => emailShare(s)}
+                  title="Per E-Mail senden"
+                >
+                  <Mail size={12} /> E-Mail
                 </button>
               </div>
             </div>
