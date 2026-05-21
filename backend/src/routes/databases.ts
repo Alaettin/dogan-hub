@@ -56,7 +56,9 @@ databasesRouter.get("/:id", requireAuth, async (req, res, next) => {
     const client = getUserScopedClient(req.user.accessToken);
     const { data, error } = await client
       .from("databases")
-      .select("*")
+      .select(
+        "id, name, icon, color, description, schema, position, archived, created_at, updated_at",
+      )
       .eq("id", req.params.id)
       .maybeSingle();
     if (error) throw errors.internal("Failed to load database");

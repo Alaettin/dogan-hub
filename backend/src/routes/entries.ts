@@ -2,7 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { getUserScopedClient } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
-import { recordEvent } from "../services/audit.service.js";
+import { recordEvent, recordEvents } from "../services/audit.service.js";
 import {
   bulkDeleteSchema,
   createEntrySchema,
@@ -217,17 +217,19 @@ entriesRouter.post("/entries/bulk-delete", requireAuth, async (req, res, next) =
     const { error: delErr } = await client.from("entries").delete().in("id", accessibleIds);
     if (delErr) throw errors.internal("Bulk delete failed");
 
-    // Pro Eintrag Audit-Event (fire-and-forget, sequenziell weil services nicht parallel-safe)
-    for (const row of existing ?? []) {
-      await recordEvent({
-        user_id: req.user.id,
-        action: "delete",
+    // Audit-Events als EIN Batch-Insert statt N sequenzieller Round-Trips.
+    const userId = req.user.id;
+    const ip = req.ip;
+    await recordEvents(
+      (existing ?? []).map((row) => ({
+        user_id: userId,
+        action: "delete" as const,
         resource_type: "entry",
         resource_id: row.id,
         metadata: { database_id: row.database_id, bulk: true },
-        ip: req.ip,
-      });
-    }
+        ip,
+      })),
+    );
 
     res.status(200).json({ deleted: accessibleIds.length });
   } catch (err) {

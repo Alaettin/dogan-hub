@@ -39,3 +39,24 @@ export async function recordEvent(entry: AuditEntry): Promise<void> {
     logger.warn({ err, entry }, "audit.recordEvent threw");
   }
 }
+
+// Wie recordEvent, aber für viele Einträge in EINEM Insert (z.B. Bulk-Delete).
+export async function recordEvents(entries: AuditEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  try {
+    const rows = entries.map((e) => ({
+      user_id: e.user_id,
+      action: e.action,
+      resource_type: e.resource_type,
+      resource_id: e.resource_id ?? null,
+      metadata: e.metadata ?? null,
+      ip_hash: hashIp(e.ip),
+    }));
+    const { error } = await supabaseService.from("audit_log").insert(rows);
+    if (error) {
+      logger.warn({ err: error, count: rows.length }, "audit.recordEvents failed");
+    }
+  } catch (err) {
+    logger.warn({ err }, "audit.recordEvents threw");
+  }
+}
