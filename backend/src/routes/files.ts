@@ -150,9 +150,11 @@ filesRouter.post("/:id/commit", requireAuth, async (req, res, next) => {
         try {
           await deleteObjects([file.storage_path]);
         } catch (cleanupErr) {
-          logger.warn(
+          // Nicht verschlucken: bleibt das Objekt liegen, ist es ein Orphan
+          // im Bucket. Als error loggen, damit es im Monitoring auffällt.
+          logger.error(
             { err: cleanupErr, path: file.storage_path },
-            "magic-bytes cleanup failed",
+            "magic-bytes cleanup failed — orphan storage object left behind",
           );
         }
         await supabaseService.from("files").delete().eq("id", file.id);

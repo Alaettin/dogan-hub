@@ -196,6 +196,11 @@ foldersRouter.delete("/:id", requireAuth, async (req, res, next) => {
       .maybeSingle();
     if (!existing) throw errors.notFound("Folder not found");
 
+    // Reihenfolge ist sicherheitsrelevant: softDeleteFolderTreeFiles macht ein
+    // atomares UPDATE (alle nicht-gelöschten Files im Subtree → deleted_at +
+    // folder_id=null) und WIRFT bei Fehler. Erst danach folgt der destruktive
+    // Folder-Delete. Dadurch referenziert beim CASCADE keine aktive File-Zeile
+    // mehr den Subtree → keine versehentlichen Hard-Deletes / Orphans.
     const { softDeletedFileCount } = await softDeleteFolderTreeFiles(client, existing);
 
     const { error } = await client.from("folders").delete().eq("id", req.params.id);

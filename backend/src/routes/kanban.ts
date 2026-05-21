@@ -42,32 +42,33 @@ kanbanRouter.get("/boards", requireAuth, async (req, res, next) => {
   try {
     if (!req.user) throw errors.unauthorized();
     const client = getUserScopedClient(req.user.accessToken);
-    const { data, error } = await client
-      .from("kanban_boards")
-      .select(BOARD_COLS)
-      .order("position", { ascending: true });
-    if (error) throw errors.internal("Boards laden fehlgeschlagen");
-
-    // Aggregat-Stats pro Board (zwei schlanke Selects + JS-Reduce).
-    const [cols, cards] = await Promise.all([
+    // Boards + Aggregat-Stats in EINEM parallelen Batch (statt boards
+    // sequenziell vor cols/cards) — spart einen Round-Trip.
+    const today = new Date().toISOString().slice(0, 10);
+    const [boardsRes, colsRes, cardsRes] = await Promise.all([
+      client.from("kanban_boards").select(BOARD_COLS).order("position", { ascending: true }),
       client.from("kanban_columns").select("board_id"),
       client.from("kanban_cards").select("board_id, due_date"),
     ]);
-    const today = new Date().toISOString().slice(0, 10);
+    if (boardsRes.error) throw errors.internal("Boards laden fehlgeschlagen");
+    if (colsRes.error || cardsRes.error) {
+      throw errors.internal("Board-Statistiken laden fehlgeschlagen");
+    }
+
     const colCount = new Map<string, number>();
-    for (const c of (cols.data ?? []) as { board_id: string }[]) {
+    for (const c of (colsRes.data ?? []) as { board_id: string }[]) {
       colCount.set(c.board_id, (colCount.get(c.board_id) ?? 0) + 1);
     }
     const cardCount = new Map<string, number>();
     const overdue = new Map<string, number>();
-    for (const c of (cards.data ?? []) as { board_id: string; due_date: string | null }[]) {
+    for (const c of (cardsRes.data ?? []) as { board_id: string; due_date: string | null }[]) {
       cardCount.set(c.board_id, (cardCount.get(c.board_id) ?? 0) + 1);
       if (c.due_date && c.due_date < today) {
         overdue.set(c.board_id, (overdue.get(c.board_id) ?? 0) + 1);
       }
     }
 
-    const items = (data ?? []).map((b: { id: string }) => ({
+    const items = (boardsRes.data ?? []).map((b: { id: string }) => ({
       ...b,
       column_count: colCount.get(b.id) ?? 0,
       card_count: cardCount.get(b.id) ?? 0,
@@ -93,9 +94,10 @@ kanbanRouter.post("/boards", requireAuth, async (req, res, next) => {
       .single();
     if (error || !board) throw errors.internal(`Board anlegen fehlgeschlagen: ${error?.message}`);
 
-    // Default-Spalten seeden
+    // Default-Spalten seeden. Schlägt das fehl, das Board kompensierend
+    // wieder entfernen — sonst bliebe ein leeres, kaputtes Board zurück.
     const defaults = ["To Do", "In Arbeit", "Erledigt"];
-    await client.from("kanban_columns").insert(
+    const { error: colError } = await client.from("kanban_columns").insert(
       defaults.map((name, i) => ({
         board_id: board.id,
         owner_id: req.user!.id,
@@ -103,6 +105,10 @@ kanbanRouter.post("/boards", requireAuth, async (req, res, next) => {
         position: i + 1,
       })),
     );
+    if (colError) {
+      await client.from("kanban_boards").delete().eq("id", board.id);
+      throw errors.internal(`Spalten anlegen fehlgeschlagen: ${colError.message}`);
+    }
 
     await recordEvent({
       user_id: req.user.id,
