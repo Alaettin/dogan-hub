@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Pin } from "lucide-react";
 import { GlassCard } from "../../components/ui/GlassCard";
@@ -32,10 +32,11 @@ function notePreview(note: Note): string {
 export function NotesListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced(search, 300);
   const [type, setType] = useState<NoteType | "">("");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const notes = useNotes({ search, type });
+  const notes = useNotes({ search: debouncedSearch, type });
   const setPinned = useSetPinned();
 
   return (
@@ -126,4 +127,14 @@ export function NotesListPage() {
       />
     </div>
   );
+}
+
+// Verzögert den Wert um `ms`, damit die Suche nicht pro Tastenanschlag fetcht.
+function useDebounced<T>(value: T, ms: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return debounced;
 }

@@ -62,6 +62,16 @@ app.use("/api/notes", notesRouter);
 
 app.use(errorHandler);
 
+// Letzte Sicherung gegen stille Crashes: unbehandelte Rejections nur loggen
+// (Server bleibt oben), bei uncaughtException geordnet beenden.
+process.on("unhandledRejection", (reason) => {
+  logger.error({ reason }, "unhandledRejection");
+});
+process.on("uncaughtException", (err) => {
+  logger.fatal({ err }, "uncaughtException — shutting down");
+  process.exit(1);
+});
+
 app.listen(env.PORT, () => {
   logger.info(
     {
