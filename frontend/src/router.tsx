@@ -44,6 +44,12 @@ const KanbanListPage = lazy(() =>
 const KanbanBoardPage = lazy(() =>
   import("./features/kanban/KanbanBoardPage").then((m) => ({ default: m.KanbanBoardPage })),
 );
+const NotesListPage = lazy(() =>
+  import("./features/notes/NotesListPage").then((m) => ({ default: m.NotesListPage })),
+);
+const NoteDetailPage = lazy(() =>
+  import("./features/notes/NoteDetailPage").then((m) => ({ default: m.NoteDetailPage })),
+);
 
 function PageFallback() {
   return (
@@ -100,6 +106,22 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageFallback />}>
                 <KanbanBoardPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/notizen",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <NotesListPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/notizen/:noteId",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <NoteDetailPage />
               </Suspense>
             ),
           },

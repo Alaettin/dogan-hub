@@ -11,6 +11,9 @@ const CalendarWidget = lazy(() =>
 const KanbanWidget = lazy(() =>
   import("../kanban/KanbanWidget").then((m) => ({ default: m.KanbanWidget })),
 );
+const NotesWidget = lazy(() =>
+  import("../notes/NotesWidget").then((m) => ({ default: m.NotesWidget })),
+);
 
 export function DashboardPage() {
   const { profile } = useAuth();
@@ -34,6 +37,10 @@ export function DashboardPage() {
 
       <Suspense fallback={null}>
         <KanbanWidget />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <NotesWidget />
       </Suspense>
     </div>
   );

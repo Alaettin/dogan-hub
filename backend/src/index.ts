@@ -23,6 +23,7 @@ import { sharesRouter } from "./routes/shares.js";
 import { publicRouter } from "./routes/public.js";
 import { calendarRouter } from "./routes/calendar.js";
 import { kanbanRouter } from "./routes/kanban.js";
+import { notesRouter } from "./routes/notes.js";
 import { publicShareLimiter } from "./middleware/rate-limit.js";
 
 const app = express();
@@ -57,6 +58,7 @@ app.use("/api/folders", sharesRouter);            // /:folderId/shares + /shares
 app.use("/api/public", publicShareLimiter, publicRouter);  // ohne Auth, strenger Limit
 app.use("/api/calendar", calendarRouter);
 app.use("/api/kanban", kanbanRouter);
+app.use("/api/notes", notesRouter);
 
 app.use(errorHandler);
 
