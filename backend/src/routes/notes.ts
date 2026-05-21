@@ -4,6 +4,7 @@ import { getUserScopedClient } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
 import { recordEvent } from "../services/audit.service.js";
 import { createNoteSchema, updateNoteSchema } from "../schemas/notes.schema.js";
+import { escapeLikeValue } from "../lib/postgrest.js";
 
 export const notesRouter = Router();
 
@@ -31,8 +32,13 @@ notesRouter.get("/", requireAuth, async (req, res, next) => {
       query = query.eq("pinned", true);
     }
     if (search) {
-      const safe = search.replace(/[%,()]/g, " ").trim();
-      if (safe) query = query.or(`title.ilike.%${safe}%,body.ilike.%${safe}%`);
+      const term = search.trim();
+      if (term) {
+        // Wert in Anführungszeichen + Escapen, damit PostgREST-Sonderzeichen
+        // (z.B. "." "," "(" ")") im Suchtext den .or()-Filter nicht zerbrechen.
+        const esc = escapeLikeValue(term);
+        query = query.or(`title.ilike."%${esc}%",body.ilike."%${esc}%"`);
+      }
     }
 
     const { data, error } = await query;
