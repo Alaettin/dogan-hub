@@ -9,6 +9,7 @@ import {
   CalendarDays,
   KanbanSquare,
   StickyNote,
+  Rss,
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { StorageIndicator } from "../../features/files/StorageIndicator";
@@ -67,6 +68,12 @@ export function Sidebar() {
           to="/notizen"
           label="Notizen"
           icon={<StickyNote size={16} />}
+          end={false}
+        />
+        <SidebarLink
+          to="/rss"
+          label="RSS Feeds"
+          icon={<Rss size={16} />}
           end={false}
         />
       </nav>

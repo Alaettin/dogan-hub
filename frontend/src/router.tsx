@@ -50,6 +50,12 @@ const NotesListPage = lazy(() =>
 const NoteDetailPage = lazy(() =>
   import("./features/notes/NoteDetailPage").then((m) => ({ default: m.NoteDetailPage })),
 );
+const RssPage = lazy(() =>
+  import("./features/rss/RssPage").then((m) => ({ default: m.RssPage })),
+);
+const RssSettingsPage = lazy(() =>
+  import("./features/settings/RssSettingsPage").then((m) => ({ default: m.RssSettingsPage })),
+);
 
 function PageFallback() {
   return (
@@ -126,6 +132,14 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: "/rss",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <RssPage />
+              </Suspense>
+            ),
+          },
+          {
             path: "/databases",
             element: (
               <Suspense fallback={<PageFallback />}>
@@ -179,6 +193,14 @@ export const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<PageFallback />}>
                     <UserDetailPage />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "rss",
+                element: (
+                  <Suspense fallback={<PageFallback />}>
+                    <RssSettingsPage />
                   </Suspense>
                 ),
               },

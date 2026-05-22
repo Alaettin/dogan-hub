@@ -24,6 +24,8 @@ import { publicRouter } from "./routes/public.js";
 import { calendarRouter } from "./routes/calendar.js";
 import { kanbanRouter } from "./routes/kanban.js";
 import { notesRouter } from "./routes/notes.js";
+import { rssRouter } from "./routes/rss.js";
+import { startRssCron } from "./services/rss-cron.js";
 import { publicShareLimiter } from "./middleware/rate-limit.js";
 
 const app = express();
@@ -59,6 +61,7 @@ app.use("/api/public", publicShareLimiter, publicRouter);  // ohne Auth, strenge
 app.use("/api/calendar", calendarRouter);
 app.use("/api/kanban", kanbanRouter);
 app.use("/api/notes", notesRouter);
+app.use("/api/rss", rssRouter);
 
 app.use(errorHandler);
 
@@ -81,4 +84,5 @@ app.listen(env.PORT, () => {
     },
     "[myhub-backend] listening",
   );
+  startRssCron();
 });

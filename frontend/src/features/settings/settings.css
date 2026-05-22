@@ -455,3 +455,115 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── RSS-Einstellungen ─────────────────────────────────────── */
+.rss-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 32px;
+}
+
+.rss-set-row__label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rss-set-row__label--off {
+  opacity: 0.45;
+}
+
+.rss-set-select {
+  width: max-content;
+  min-width: 170px;
+  cursor: pointer;
+}
+
+/* Segmented-Control (Pill-Toggle) */
+.rss-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: var(--glass-bg-1);
+  border: 1px solid var(--glass-border);
+}
+.rss-seg__btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.rss-seg__btn:hover {
+  color: var(--text-primary);
+}
+.rss-seg__btn--active {
+  background: rgba(249, 115, 22, 0.18);
+  color: var(--text-primary);
+}
+
+.rss-days-input {
+  width: 88px;
+}
+
+.rss-set-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #6ee7b7;
+  min-height: 16px;
+}
+
+/* Toggle-Switch */
+.rss-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.rss-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.rss-toggle__track {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  transition: background 0.15s ease;
+}
+.rss-toggle__track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--text-secondary);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.rss-toggle input:checked + .rss-toggle__track {
+  background: rgba(249, 115, 22, 0.5);
+  border-color: rgba(249, 115, 22, 0.6);
+}
+.rss-toggle input:checked + .rss-toggle__track::after {
+  transform: translateX(18px);
+  background: #fff;
+}
+.rss-toggle input:disabled + .rss-toggle__track {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

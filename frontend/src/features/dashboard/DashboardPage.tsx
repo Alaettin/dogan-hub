@@ -1,7 +1,5 @@
 import { lazy, Suspense } from "react";
 import { useAuth } from "../auth/useAuth";
-import { StatsRow } from "./StatsRow";
-import { useDashboardStats } from "./useDashboard";
 import "./dashboard.css";
 
 // Widgets lazy — halten Kalender-/Kanban-Code aus dem Main-Bundle.
@@ -14,12 +12,14 @@ const KanbanWidget = lazy(() =>
 const NotesWidget = lazy(() =>
   import("../notes/NotesWidget").then((m) => ({ default: m.NotesWidget })),
 );
+const RssWidget = lazy(() =>
+  import("../rss/RssWidget").then((m) => ({ default: m.RssWidget })),
+);
 
 export function DashboardPage() {
   const { profile } = useAuth();
-  const stats = useDashboardStats();
 
-  const displayName = profile?.display_name ?? stats.data?.user.display_name ?? "Hub-Nutzer";
+  const displayName = profile?.display_name ?? "Hub-Nutzer";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28, maxWidth: 1180 }}>
@@ -28,8 +28,6 @@ export function DashboardPage() {
           Hallo, {displayName}
         </h1>
       </header>
-
-      <StatsRow stats={stats.data} loading={stats.isLoading} />
 
       <Suspense fallback={null}>
         <CalendarWidget />
@@ -41,6 +39,10 @@ export function DashboardPage() {
 
       <Suspense fallback={null}>
         <NotesWidget />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <RssWidget />
       </Suspense>
     </div>
   );

@@ -23,6 +23,18 @@ const envSchema = z.object({
   // Wenn gesetzt, schreibt der Logger zusätzlich in diese Datei mit
   // täglicher Rotation (siehe pino-roll in lib/logger.ts).
   LOG_FILE_PATH: z.string().optional(),
+
+  // RSS-Cron: periodischer Feed-Refresh + Aufräumen. Abschaltbar (Tests/Dev).
+  // Der Refresh-Takt ist die Untergrenze des pro-Nutzer-Intervalls; das
+  // tatsächliche Intervall steht pro Nutzer in public.rss_settings.
+  // RSS_REFRESH_INTERVAL_MINUTES = Fallback für Nutzer ohne Settings-Zeile.
+  RSS_CRON_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
+  RSS_CRON_SCHEDULE: z.string().default("*/5 * * * *"),
+  RSS_REFRESH_INTERVAL_MINUTES: z.coerce.number().int().positive().default(30),
+  RSS_CLEANUP_SCHEDULE: z.string().default("30 3 * * *"),
 });
 
 const parsed = envSchema.safeParse(process.env);
