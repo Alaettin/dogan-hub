@@ -25,6 +25,7 @@ import { calendarRouter } from "./routes/calendar.js";
 import { kanbanRouter } from "./routes/kanban.js";
 import { notesRouter } from "./routes/notes.js";
 import { rssRouter } from "./routes/rss.js";
+import { shopRouter } from "./routes/shop.js";
 import { startRssCron } from "./services/rss-cron.js";
 import { publicShareLimiter } from "./middleware/rate-limit.js";
 
@@ -62,6 +63,7 @@ app.use("/api/calendar", calendarRouter);
 app.use("/api/kanban", kanbanRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/rss", rssRouter);
+app.use("/api/shop", shopRouter);
 
 app.use(errorHandler);
 

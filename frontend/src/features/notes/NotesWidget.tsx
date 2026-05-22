@@ -15,9 +15,9 @@ function preview(note: Note): string {
   return texts.slice(0, 3).join(" · ");
 }
 
-export function NotesWidget() {
+export function NotesWidget({ count = 6 }: { count?: number }) {
   const notes = useNotes({ pinned: true });
-  const items = (notes.data ?? []).slice(0, 6);
+  const items = (notes.data ?? []).slice(0, count);
 
   return (
     <GlassCard className="notes-widget">

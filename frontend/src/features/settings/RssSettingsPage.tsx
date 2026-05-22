@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { GlassCard } from "../../components/ui/GlassCard";
+import { GlassButton } from "../../components/ui/GlassButton";
 import { GlassInput } from "../../components/ui/GlassInput";
+import { Toggle } from "./controls";
 import { cn } from "../../lib/cn";
 import {
   useRssSettings,
   useUpdateRssSettings,
   type CleanupMode,
   type DefaultView,
-  type UpdateRssSettingsInput,
+  type RssSettings,
 } from "../rss/useRss";
 import "./settings.css";
 
@@ -35,27 +37,14 @@ const VIEW_OPTIONS: { v: DefaultView; label: string }[] = [
 export function RssSettingsPage() {
   const settings = useRssSettings();
   const update = useUpdateRssSettings();
-  const [savedAt, setSavedAt] = useState(0);
-  const savedTimer = useRef<ReturnType<typeof setTimeout>>();
+  const [draft, setDraft] = useState<RssSettings | null>(null);
+  const [saved, setSaved] = useState(false);
 
-  const [days, setDays] = useState<string>("");
   useEffect(() => {
-    if (settings.data) setDays(String(settings.data.cleanup_after_days));
-  }, [settings.data?.cleanup_after_days]);
+    if (settings.data) setDraft(settings.data);
+  }, [settings.data]);
 
-  useEffect(() => () => clearTimeout(savedTimer.current), []);
-
-  function save(patch: UpdateRssSettingsInput) {
-    update.mutate(patch, {
-      onSuccess: () => {
-        setSavedAt(Date.now());
-        clearTimeout(savedTimer.current);
-        savedTimer.current = setTimeout(() => setSavedAt(0), 2000);
-      },
-    });
-  }
-
-  if (settings.isLoading || !settings.data) {
+  if (settings.isLoading || !draft) {
     return (
       <>
         <header className="settings-content__header">
@@ -66,20 +55,33 @@ export function RssSettingsPage() {
     );
   }
 
-  const s = settings.data;
-  const cleanupOff = s.cleanup_mode === "off";
+  const cleanupOff = draft.cleanup_mode === "off";
+  const dirty = !!settings.data && JSON.stringify(draft) !== JSON.stringify(settings.data);
 
-  function commitDays() {
-    const n = Math.max(1, Math.min(3650, Number(days) || s.cleanup_after_days));
-    setDays(String(n));
-    if (n !== s.cleanup_after_days) save({ cleanup_after_days: n });
+  function setField<K extends keyof RssSettings>(field: K, value: RssSettings[K]) {
+    setDraft((d) => (d ? { ...d, [field]: value } : d));
+    setSaved(false);
+  }
+
+  function onSave() {
+    if (!draft) return;
+    update.mutate(
+      {
+        refresh_interval_minutes: draft.refresh_interval_minutes,
+        cleanup_mode: draft.cleanup_mode,
+        cleanup_after_days: Math.max(1, Math.min(3650, Math.round(draft.cleanup_after_days) || 30)),
+        cleanup_keep_favorites: draft.cleanup_keep_favorites,
+        default_view: draft.default_view,
+        mark_read_on_open: draft.mark_read_on_open,
+      },
+      { onSuccess: () => setSaved(true) },
+    );
   }
 
   return (
     <>
       <header className="settings-content__header">
         <h1 className="settings-content__title">RSS-Feeds</h1>
-        <span className="rss-set-saved">{savedAt > 0 && (<><Check size={13} /> Gespeichert</>)}</span>
       </header>
 
       <GlassCard className="user-detail-section">
@@ -88,14 +90,16 @@ export function RssSettingsPage() {
           <span className="rss-set-row__label">Intervall</span>
           <select
             className="glass-input rss-set-select"
-            value={s.refresh_interval_minutes}
-            onChange={(e) => save({ refresh_interval_minutes: Number(e.target.value) })}
+            value={draft.refresh_interval_minutes}
+            onChange={(e) => setField("refresh_interval_minutes", Number(e.target.value))}
           >
             {INTERVAL_OPTIONS.map((o) => (
               <option key={o.v} value={o.v}>{o.label}</option>
             ))}
-            {!INTERVAL_OPTIONS.some((o) => o.v === s.refresh_interval_minutes) && (
-              <option value={s.refresh_interval_minutes}>{s.refresh_interval_minutes} Minuten</option>
+            {!INTERVAL_OPTIONS.some((o) => o.v === draft.refresh_interval_minutes) && (
+              <option value={draft.refresh_interval_minutes}>
+                {draft.refresh_interval_minutes} Minuten
+              </option>
             )}
           </select>
         </div>
@@ -107,8 +111,8 @@ export function RssSettingsPage() {
           <span className="rss-set-row__label">Alte Artikel löschen</span>
           <Seg
             options={CLEANUP_OPTIONS}
-            value={s.cleanup_mode}
-            onChange={(v) => save({ cleanup_mode: v })}
+            value={draft.cleanup_mode}
+            onChange={(v) => setField("cleanup_mode", v)}
           />
         </div>
         <div className="rss-set-row">
@@ -120,13 +124,9 @@ export function RssSettingsPage() {
             type="number"
             min={1}
             max={3650}
-            value={days}
+            value={draft.cleanup_after_days}
             disabled={cleanupOff}
-            onChange={(e) => setDays(e.target.value)}
-            onBlur={commitDays}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
+            onChange={(e) => setField("cleanup_after_days", Number(e.target.value))}
           />
         </div>
         <div className="rss-set-row">
@@ -134,9 +134,9 @@ export function RssSettingsPage() {
             Favoriten behalten
           </span>
           <Toggle
-            checked={s.cleanup_keep_favorites}
+            checked={draft.cleanup_keep_favorites}
             disabled={cleanupOff}
-            onChange={(v) => save({ cleanup_keep_favorites: v })}
+            onChange={(v) => setField("cleanup_keep_favorites", v)}
           />
         </div>
       </GlassCard>
@@ -147,15 +147,29 @@ export function RssSettingsPage() {
           <span className="rss-set-row__label">Standard-Ansicht</span>
           <Seg
             options={VIEW_OPTIONS}
-            value={s.default_view}
-            onChange={(v) => save({ default_view: v })}
+            value={draft.default_view}
+            onChange={(v) => setField("default_view", v)}
           />
         </div>
         <div className="rss-set-row">
           <span className="rss-set-row__label">Beim Öffnen als gelesen markieren</span>
-          <Toggle checked={s.mark_read_on_open} onChange={(v) => save({ mark_read_on_open: v })} />
+          <Toggle
+            checked={draft.mark_read_on_open}
+            onChange={(v) => setField("mark_read_on_open", v)}
+          />
         </div>
       </GlassCard>
+
+      <div className="user-detail-form-row__actions">
+        {saved && !dirty && (
+          <span className="rss-set-saved">
+            <Check size={13} /> Gespeichert
+          </span>
+        )}
+        <GlassButton variant="primary" onClick={onSave} disabled={!dirty || update.isPending}>
+          {update.isPending ? "Speichere…" : "Speichern"}
+        </GlassButton>
+      </div>
     </>
   );
 }
@@ -183,27 +197,5 @@ function Seg<T extends string>({
         </button>
       ))}
     </div>
-  );
-}
-
-function Toggle({
-  checked,
-  disabled,
-  onChange,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="rss-toggle">
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span className="rss-toggle__track" />
-    </label>
   );
 }

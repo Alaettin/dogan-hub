@@ -474,6 +474,12 @@
   opacity: 0.45;
 }
 
+.dash-set-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .rss-set-select {
   width: max-content;
   min-width: 170px;

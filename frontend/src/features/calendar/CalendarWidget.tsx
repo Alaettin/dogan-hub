@@ -23,7 +23,7 @@ type AgendaItem =
   | { kind: "event"; key: string; title: string; when: Date; label: string; color: string }
   | { kind: "holiday"; key: string; title: string; when: Date; label: string };
 
-export function CalendarWidget() {
+export function CalendarWidget({ count = 6 }: { count?: number }) {
   // Stabiler Tagesbezug — einmal pro Mount. Verhindert, dass sich das
   // Query-Fenster (und damit der React-Query-Key) bei jedem Render ändert.
   const today = useMemo(() => new Date(), []);
@@ -84,8 +84,8 @@ export function CalendarWidget() {
     }
 
     items.sort((a, b) => a.when.getTime() - b.when.getTime());
-    return items.slice(0, 6);
-  }, [occs, today, windowEnd]);
+    return items.slice(0, count);
+  }, [occs, today, windowEnd, count]);
 
   return (
     <GlassCard className="cal-widget">

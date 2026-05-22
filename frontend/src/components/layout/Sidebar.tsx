@@ -10,6 +10,7 @@ import {
   KanbanSquare,
   StickyNote,
   Rss,
+  ShoppingBag,
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { StorageIndicator } from "../../features/files/StorageIndicator";
@@ -37,7 +38,6 @@ export function Sidebar() {
 
       <nav className="sidebar__nav">
         <SidebarLink to="/" label="Dashboard" icon={<LayoutDashboard size={16} />} />
-        <SidebarLink to="/kalender" label="Kalender" icon={<CalendarDays size={16} />} />
       </nav>
 
       <div className="sidebar__section-label">Daten</div>
@@ -56,8 +56,9 @@ export function Sidebar() {
         />
       </nav>
 
-      <div className="sidebar__section-label">Applikation</div>
+      <div className="sidebar__section-label">Office</div>
       <nav className="sidebar__nav">
+        <SidebarLink to="/kalender" label="Kalender" icon={<CalendarDays size={16} />} />
         <SidebarLink
           to="/kanban"
           label="Kanban"
@@ -74,6 +75,16 @@ export function Sidebar() {
           to="/rss"
           label="RSS Feeds"
           icon={<Rss size={16} />}
+          end={false}
+        />
+      </nav>
+
+      <div className="sidebar__section-label">Shopping</div>
+      <nav className="sidebar__nav">
+        <SidebarLink
+          to="/shopping"
+          label="Verkäufe"
+          icon={<ShoppingBag size={16} />}
           end={false}
         />
       </nav>

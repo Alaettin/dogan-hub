@@ -12,9 +12,9 @@ function formatDue(iso: string): string {
   });
 }
 
-export function KanbanWidget() {
+export function KanbanWidget({ count = 6 }: { count?: number }) {
   const tasks = useUpcomingTasks();
-  const items = (tasks.data ?? []).slice(0, 6);
+  const items = (tasks.data ?? []).slice(0, count);
   const today = new Date().toISOString().slice(0, 10);
 
   return (

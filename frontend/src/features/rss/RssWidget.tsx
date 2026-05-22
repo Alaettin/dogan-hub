@@ -17,8 +17,8 @@ function relativeTime(iso: string | null): string {
   return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "short" });
 }
 
-export function RssWidget() {
-  const latest = useLatestItems(5);
+export function RssWidget({ count = 5 }: { count?: number }) {
+  const latest = useLatestItems(count);
   const items = latest.data ?? [];
 
   return (

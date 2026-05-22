@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Users, Rss } from "lucide-react";
+import { Users, Rss, LayoutDashboard } from "lucide-react";
 import { cn } from "../../lib/cn";
 import "./settings.css";
 
@@ -10,6 +10,7 @@ interface SubNavItem {
 }
 
 const items: SubNavItem[] = [
+  { to: "/einstellungen/dashboard", label: "Dashboard", icon: <LayoutDashboard size={14} /> },
   { to: "/einstellungen/benutzer", label: "Benutzerverwaltung", icon: <Users size={14} /> },
   { to: "/einstellungen/rss", label: "RSS-Feeds", icon: <Rss size={14} /> },
 ];

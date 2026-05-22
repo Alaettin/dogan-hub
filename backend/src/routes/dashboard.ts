@@ -3,8 +3,26 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { getUserScopedClient } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
+import { updateDashboardSettingsSchema } from "../schemas/dashboard.schema.js";
 
 export const dashboardRouter = Router();
+
+const DASHBOARD_SETTINGS_COLS =
+  "owner_id, show_calendar, show_kanban, show_notes, show_rss, calendar_count, kanban_count, notes_count, rss_count";
+
+function defaultDashboardSettings(ownerId: string) {
+  return {
+    owner_id: ownerId,
+    show_calendar: true,
+    show_kanban: true,
+    show_notes: true,
+    show_rss: true,
+    calendar_count: 6,
+    kanban_count: 6,
+    notes_count: 6,
+    rss_count: 5,
+  };
+}
 
 const STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB MVP Hard-Limit (PLAN §4g)
 
@@ -101,6 +119,41 @@ dashboardRouter.get("/stats", requireAuth, async (req, res, next) => {
         files: filesCount,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /api/dashboard/settings ─────────────────────────────────────
+dashboardRouter.get("/settings", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const client = getUserScopedClient(req.user.accessToken);
+    const { data, error } = await client
+      .from("dashboard_settings")
+      .select(DASHBOARD_SETTINGS_COLS)
+      .eq("owner_id", req.user.id)
+      .maybeSingle();
+    if (error) throw errors.internal(`Einstellungen laden fehlgeschlagen: ${error.message}`);
+    res.json({ settings: data ?? defaultDashboardSettings(req.user.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PATCH /api/dashboard/settings ───────────────────────────────────
+dashboardRouter.patch("/settings", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const body = updateDashboardSettingsSchema.parse(req.body);
+    const client = getUserScopedClient(req.user.accessToken);
+    const { data, error } = await client
+      .from("dashboard_settings")
+      .upsert({ owner_id: req.user.id, ...body }, { onConflict: "owner_id" })
+      .select(DASHBOARD_SETTINGS_COLS)
+      .single();
+    if (error || !data) throw errors.internal(`Speichern fehlgeschlagen: ${error?.message}`);
+    res.json({ settings: data });
   } catch (err) {
     next(err);
   }

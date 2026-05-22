@@ -56,6 +56,21 @@ const RssPage = lazy(() =>
 const RssSettingsPage = lazy(() =>
   import("./features/settings/RssSettingsPage").then((m) => ({ default: m.RssSettingsPage })),
 );
+const DashboardSettingsPage = lazy(() =>
+  import("./features/settings/DashboardSettingsPage").then((m) => ({
+    default: m.DashboardSettingsPage,
+  })),
+);
+const ShoppingPlatformsPage = lazy(() =>
+  import("./features/shopping/ShoppingPlatformsPage").then((m) => ({
+    default: m.ShoppingPlatformsPage,
+  })),
+);
+const ShoppingPlatformDetailPage = lazy(() =>
+  import("./features/shopping/ShoppingPlatformDetailPage").then((m) => ({
+    default: m.ShoppingPlatformDetailPage,
+  })),
+);
 
 function PageFallback() {
   return (
@@ -140,6 +155,22 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: "/shopping",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <ShoppingPlatformsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/shopping/:platformId",
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <ShoppingPlatformDetailPage />
+              </Suspense>
+            ),
+          },
+          {
             path: "/databases",
             element: (
               <Suspense fallback={<PageFallback />}>
@@ -201,6 +232,14 @@ export const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<PageFallback />}>
                     <RssSettingsPage />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "dashboard",
+                element: (
+                  <Suspense fallback={<PageFallback />}>
+                    <DashboardSettingsPage />
                   </Suspense>
                 ),
               },
