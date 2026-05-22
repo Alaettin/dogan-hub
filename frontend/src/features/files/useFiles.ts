@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../../lib/api";
+import { supabase } from "../../lib/supabase";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export interface FileRow {
   id: string;
@@ -87,6 +90,55 @@ export function useDownloadFile() {
         body: JSON.stringify({}),
       });
       return data.url;
+    },
+  });
+}
+
+export interface DownloadZipPayload {
+  fileIds?: string[];
+  folderIds?: string[];
+  name?: string;
+}
+
+// Authentifizierter ZIP-Download: POST mit Bearer-Token → Blob → Datei-Download
+// (window.open kann keinen Auth-Header setzen; gleiches Muster wie OPML-Export).
+export function useDownloadZip() {
+  return useMutation({
+    mutationFn: async (payload: DownloadZipPayload) => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      const res = await fetch(`${API_BASE}/files/download-zip`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        let msg = "Download fehlgeschlagen";
+        try {
+          const j = await res.json();
+          msg = j?.error?.message ?? msg;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(msg);
+      }
+      const cd = res.headers.get("Content-Disposition") ?? "";
+      const m = /filename\*=UTF-8''([^;]+)|filename="([^"]+)"/i.exec(cd);
+      const fname = m
+        ? decodeURIComponent(m[1] ?? m[2])
+        : `${payload.name ?? "download"}.zip`;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     },
   });
 }

@@ -28,5 +28,16 @@ export const listFilesQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+export const downloadZipSchema = z
+  .object({
+    fileIds: z.array(z.string().uuid()).max(500).optional(),
+    folderIds: z.array(z.string().uuid()).max(50).optional(),
+    name: z.string().max(200).optional(),
+  })
+  .refine((v) => (v.fileIds?.length ?? 0) + (v.folderIds?.length ?? 0) > 0, {
+    message: "Mindestens eine Datei oder einen Ordner angeben",
+  });
+
 export type SignUploadInput = z.infer<typeof signUploadSchema>;
 export type UpdateFileInput = z.infer<typeof updateFileSchema>;
+export type DownloadZipInput = z.infer<typeof downloadZipSchema>;

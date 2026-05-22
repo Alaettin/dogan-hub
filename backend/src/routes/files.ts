@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
+import archiver from "archiver";
 import { requireAuth } from "../middleware/auth.js";
 import { getUserScopedClient, supabaseService } from "../config/supabase.js";
 import { errors } from "../lib/errors.js";
 import { recordEvent } from "../services/audit.service.js";
 import {
   commitFileSchema,
+  downloadZipSchema,
   listFilesQuerySchema,
   signUploadSchema,
   updateFileSchema,
@@ -182,6 +184,135 @@ filesRouter.post("/:id/commit", requireAuth, async (req, res, next) => {
     });
 
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/files/download-zip ────────────────────────────────────
+// Lädt mehrere Dateien und/oder ganze Ordner (rekursiv) als ein ZIP.
+// RLS (user-scoped client) stellt sicher, dass nur eigene Dateien landen.
+filesRouter.post("/download-zip", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) throw errors.unauthorized();
+    const body = downloadZipSchema.parse(req.body);
+    const client = getUserScopedClient(req.user.accessToken);
+
+    type Entry = { storagePath: string; zipPath: string };
+    const entries: Entry[] = [];
+    const used = new Set<string>();
+
+    // Eindeutigen ZIP-Pfad sicherstellen (Namenskollision → " (2)").
+    const uniquePath = (p: string): string => {
+      if (!used.has(p)) {
+        used.add(p);
+        return p;
+      }
+      const dot = p.lastIndexOf(".");
+      const base = dot > 0 ? p.slice(0, dot) : p;
+      const ext = dot > 0 ? p.slice(dot) : "";
+      let i = 2;
+      let cand = `${base} (${i})${ext}`;
+      while (used.has(cand)) cand = `${base} (${(i += 1)})${ext}`;
+      used.add(cand);
+      return cand;
+    };
+
+    let singleFolderName: string | null = null;
+
+    // ── Ordner (rekursiv) ──
+    if (body.folderIds && body.folderIds.length > 0) {
+      const { data: allFolders, error: fErr } = await client
+        .from("folders")
+        .select("id, name, path");
+      if (fErr) throw errors.internal(`Ordner laden fehlgeschlagen: ${fErr.message}`);
+      const folders = (allFolders ?? []) as { id: string; name: string; path: string }[];
+      const byId = new Map(folders.map((f) => [f.id, f]));
+
+      const onlyOneFolder = body.folderIds.length === 1 && !(body.fileIds && body.fileIds.length);
+
+      for (const rootId of body.folderIds) {
+        const root = byId.get(rootId);
+        if (!root) continue; // fremder/ungültiger Ordner → RLS
+        if (onlyOneFolder) singleFolderName = root.name;
+
+        const rootPath = root.path;
+        const subtree = folders.filter(
+          (f) => f.path === rootPath || f.path.startsWith(`${rootPath}/`),
+        );
+        const subtreeIds = subtree.map((f) => f.id);
+        const pathById = new Map(subtree.map((f) => [f.id, f.path]));
+        const baseSeg = rootPath.split("/").filter(Boolean).slice(-1)[0] ?? root.name;
+
+        const { data: files, error: filErr } = await client
+          .from("files")
+          .select("name, storage_path, folder_id")
+          .in("folder_id", subtreeIds)
+          .is("deleted_at", null);
+        if (filErr) throw errors.internal(`Dateien laden fehlgeschlagen: ${filErr.message}`);
+
+        for (const file of files ?? []) {
+          const fPath = pathById.get(file.folder_id as string) ?? rootPath;
+          const relDir = baseSeg + fPath.slice(rootPath.length); // z.B. "Docs" + "/Sub"
+          entries.push({
+            storagePath: file.storage_path as string,
+            zipPath: uniquePath(`${relDir}/${file.name as string}`),
+          });
+        }
+      }
+    }
+
+    // ── Einzeldateien (im ZIP-Root) ──
+    if (body.fileIds && body.fileIds.length > 0) {
+      const { data: files, error: filErr } = await client
+        .from("files")
+        .select("name, storage_path")
+        .in("id", body.fileIds)
+        .is("deleted_at", null);
+      if (filErr) throw errors.internal(`Dateien laden fehlgeschlagen: ${filErr.message}`);
+      for (const file of files ?? []) {
+        entries.push({
+          storagePath: file.storage_path as string,
+          zipPath: uniquePath(file.name as string),
+        });
+      }
+    }
+
+    if (entries.length === 0) throw errors.notFound("Keine Dateien zum Herunterladen");
+
+    // ── ZIP streamen ──
+    const rawName = (body.name?.trim() || singleFolderName || "dateien").replace(/\.zip$/i, "");
+    const asciiName = rawName.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "_") || "download";
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${asciiName}.zip"; filename*=UTF-8''${encodeURIComponent(rawName)}.zip`,
+    );
+
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    archive.on("warning", (err) => logger.warn({ err }, "zip: warning"));
+    archive.on("error", (err) => {
+      logger.error({ err }, "zip: archive error");
+      res.destroy();
+    });
+    archive.pipe(res);
+
+    for (const entry of entries) {
+      try {
+        const url = await getSignedDownloadUrl(entry.storagePath, 300);
+        const r = await fetch(url);
+        if (!r.ok) {
+          logger.warn({ path: entry.storagePath, status: r.status }, "zip: file fetch failed");
+          continue;
+        }
+        const buf = Buffer.from(await r.arrayBuffer());
+        archive.append(buf, { name: entry.zipPath });
+      } catch (e) {
+        logger.warn({ err: e, path: entry.storagePath }, "zip: append failed");
+      }
+    }
+
+    await archive.finalize();
   } catch (err) {
     next(err);
   }

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { LayoutGrid, List, Plus, Share2, UploadCloud } from "lucide-react";
+import { LayoutGrid, List, Plus, Share2, UploadCloud, FileArchive, X } from "lucide-react";
 import { GlassButton } from "../../components/ui/GlassButton";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useFolders } from "./useFolders";
-import { useFiles, type FileRow } from "./useFiles";
+import { useFiles, useDownloadZip, type FileRow } from "./useFiles";
 import { FolderTree } from "./FolderTree";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FileList } from "./FileList";
@@ -25,16 +25,36 @@ export function FilesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileRow | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const folders = useFolders();
   const files = useFiles(currentFolderId);
   const currentFolder = folders.data?.find((f) => f.id === currentFolderId);
+  const downloadZip = useDownloadZip();
+
+  const fileItems = files.data?.items ?? [];
 
   function navigate(folderId: string | null) {
     const next = new URLSearchParams(searchParams);
     if (folderId) next.set("folder", folderId);
     else next.delete("folder");
     setSearchParams(next, { replace: true });
+    setSelectedIds(new Set()); // Auswahl beim Ordnerwechsel zurücksetzen
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) =>
+      prev.size === fileItems.length ? new Set() : new Set(fileItems.map((f) => f.id)),
+    );
   }
 
   function triggerUpload() {
@@ -107,21 +127,72 @@ export function FilesPage() {
             <Share2 size={14} />
             Freigeben
           </GlassButton>
+          <GlassButton
+            variant="secondary"
+            onClick={() =>
+              currentFolder &&
+              downloadZip.mutate({ folderIds: [currentFolder.id], name: currentFolder.name })
+            }
+            disabled={!currentFolderId || downloadZip.isPending}
+            title={
+              currentFolderId
+                ? "Aktuellen Ordner als ZIP herunterladen"
+                : "Öffne einen Ordner, um ihn als ZIP zu laden"
+            }
+          >
+            <FileArchive size={14} />
+            Als ZIP
+          </GlassButton>
           <GlassButton variant="primary" onClick={triggerUpload}>
             <UploadCloud size={14} />
             Upload
           </GlassButton>
         </div>
 
+        {selectedIds.size > 0 && (
+          <div className="files-selbar">
+            <span className="files-selbar__count">{selectedIds.size} ausgewählt</span>
+            <GlassButton
+              variant="primary"
+              onClick={() =>
+                downloadZip.mutate({ fileIds: [...selectedIds], name: "dateien" })
+              }
+              disabled={downloadZip.isPending}
+            >
+              <FileArchive size={14} />
+              Als ZIP herunterladen
+            </GlassButton>
+            <button
+              type="button"
+              className="files-selbar__clear"
+              onClick={() => setSelectedIds(new Set())}
+              aria-label="Auswahl aufheben"
+            >
+              <X size={15} />
+            </button>
+          </div>
+        )}
+
         <UploadDropZone folderId={currentFolderId}>
           <GlassPanel style={{ padding: 0, minHeight: 320, overflow: "hidden" }}>
             {files.isLoading ? (
               <div className="file-list__empty">Lade…</div>
             ) : viewMode === "list" ? (
-              <FileList files={files.data?.items ?? []} onOpen={setPreviewFile} />
+              <FileList
+                files={fileItems}
+                onOpen={setPreviewFile}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectAll={toggleSelectAll}
+              />
             ) : (
               <div style={{ padding: 14 }}>
-                <FileGrid files={files.data?.items ?? []} onOpen={setPreviewFile} />
+                <FileGrid
+                  files={fileItems}
+                  onOpen={setPreviewFile}
+                  selectedIds={selectedIds}
+                  onToggleSelect={toggleSelect}
+                />
               </div>
             )}
           </GlassPanel>

@@ -8,6 +8,7 @@ import {
   Share2,
   Trash2,
   FolderInput,
+  FileArchive,
 } from "lucide-react";
 import { GlassDialog } from "../../components/ui/GlassDialog";
 import { GlassButton } from "../../components/ui/GlassButton";
@@ -15,6 +16,7 @@ import { GlassInput } from "../../components/ui/GlassInput";
 import { Dropdown, DropdownItem } from "../../components/ui/Dropdown";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import { useDeleteFolder, useUpdateFolder, type Folder } from "./useFolders";
+import { useDownloadZip } from "./useFiles";
 import { buildFolderTree, type FolderNode } from "./folder-tree";
 import { MoveDialog } from "./MoveDialog";
 import { ShareFolderDialog } from "./ShareFolderDialog";
@@ -71,6 +73,7 @@ function FolderNodeRow({ node, level, currentFolderId, onNavigate }: FolderNodeR
 
   const update = useUpdateFolder(node.id);
   const remove = useDeleteFolder(node.id);
+  const downloadZip = useDownloadZip();
 
   const active = currentFolderId === node.id;
   const hasChildren = node.children.length > 0;
@@ -115,6 +118,13 @@ function FolderNodeRow({ node, level, currentFolderId, onNavigate }: FolderNodeR
             </button>
           }
         >
+          <DropdownItem
+            icon={<FileArchive size={12} />}
+            label="Als ZIP herunterladen"
+            onClick={() =>
+              downloadZip.mutate({ folderIds: [node.id], name: node.name })
+            }
+          />
           <DropdownItem
             icon={<Pencil size={12} />}
             label="Umbenennen"
